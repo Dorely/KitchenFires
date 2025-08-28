@@ -1,15 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30621.155
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36408.4 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitchenFires", "KitchenFires.csproj", "{AC94BDCC-DF2B-4A98-9F3C-104A8D372979}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1B05AA71-964A-44FB-8FC2-A2F433D70B42}"
 	ProjectSection(SolutionItems) = preProject
-		About\About.xml = About\About.xml
-		LoadFolders.xml = LoadFolders.xml
-		About\Preview.png = About\Preview.png
+		..\About\About.xml = ..\About\About.xml
+		..\LoadFolders.xml = ..\LoadFolders.xml
+		..\About\Preview.png = ..\About\Preview.png
+		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
 Global

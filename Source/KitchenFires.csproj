@@ -61,6 +61,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="KitchenFires.cs" />
+    <Compile Include="KitchenIncident.cs" />
+    <Compile Include="AnkleSprainIncident.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

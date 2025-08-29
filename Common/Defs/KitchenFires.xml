@@ -1,5 +1,68 @@
 <Defs>
 
- 
-  
+  <!-- Ankle Sprain Hediff -->
+  <HediffDef>
+    <defName>AnkleSprain</defName>
+    <label>sprained ankle</label>
+    <description>A twisted or sprained ankle from stepping awkwardly on uneven terrain or obstacles. Causes pain and reduces movement speed.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(179, 179, 156)</defaultLabelColor>
+    <makesSickThought>false</makesSickThought>
+    <tendable>true</tendable>
+    <isBad>true</isBad>
+    <comps>
+      <li Class="HediffCompProperties_SeverityPerDay">
+        <severityPerDay>-0.5</severityPerDay>
+        <showHoursToRecover>true</showHoursToRecover>
+      </li>
+      <li Class="HediffCompProperties_GetsPermanent">
+        <becomePermanentChanceFactor>0.02</becomePermanentChanceFactor>
+        <permanentLabel>old ankle injury</permanentLabel>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <label>minor</label>
+        <minSeverity>0</minSeverity>
+        <painOffset>0.05</painOffset>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.05</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <label>moderate</label>
+        <minSeverity>0.25</minSeverity>
+        <painOffset>0.10</painOffset>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.15</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <label>severe</label>
+        <minSeverity>0.4</minSeverity>
+        <painOffset>0.15</painOffset>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.25</offset>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+    <injuryProps>
+      <painPerSeverity>0.125</painPerSeverity>
+      <averagePainPerSeverityPermanent>0.0625</averagePainPerSeverityPermanent>
+      <bleedRate>0</bleedRate>
+      <canMerge>false</canMerge>
+      <destroyedLabel>mangled</destroyedLabel>
+      <destroyedOutLabel>mangled off</destroyedOutLabel>
+    </injuryProps>
+  </HediffDef>
+
 </Defs>

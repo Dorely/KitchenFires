@@ -157,33 +157,70 @@ namespace KitchenFires
 
         private static void TriggerButcheringAccident(Pawn pawn, float severity)
         {
-            // Determine which type of injury based on severity
-            bool isHandInjury = severity > 0.4f;
+            // Pure random roll for accident severity - skill only affects occurrence probability
+            float severityRoll = Rand.Value;
             
-            BodyPartRecord targetPart = GetTargetBodyPart(pawn, isHandInjury);
-            if (targetPart == null) return;
-
-            // Create appropriate injury
-            HediffDef injuryDef = isHandInjury ? HediffDefOf.Cut : HediffDefOf.Cut; // Could be MissingBodyPart for severe
-            var injury = HediffMaker.MakeHediff(injuryDef, pawn, targetPart);
-            
-            if (severity > 0.6f && isHandInjury)
+            // Determine injury type based on fixed severity thresholds
+            if (severityRoll >= 0.95f)
             {
-                // Very severe - amputation
-                injury = HediffMaker.MakeHediff(HediffDefOf.MissingBodyPart, pawn, targetPart);
+                // 5% chance: Hand amputation
+                var targetPart = GetTargetBodyPart(pawn, true);
+                if (targetPart != null)
+                {
+                    var injury = HediffMaker.MakeHediff(HediffDefOf.MissingBodyPart, pawn, targetPart);
+                    injury.Severity = severity;
+                    pawn.health.AddHediff(injury);
+                    
+                    Messages.Message($"{pawn.NameShortColored} severed their hand while butchering!",
+                        new LookTargets(pawn), MessageTypeDefOf.NegativeEvent);
+                    Log.Message($"[KitchenFires] Hand amputation for {pawn.Name}: {targetPart.Label} with severity {severity:F2}");
+                }
             }
-            
-            injury.Severity = severity;
-            pawn.health.AddHediff(injury);
-
-            // Send message
-            string bodyPartName = isHandInjury ? "hand" : "finger";
-            string injuryType = injury.def == HediffDefOf.MissingBodyPart ? "severed" : "cut";
-            
-            Messages.Message($"{pawn.NameShortColored} {injuryType} their {bodyPartName} while butchering!",
-                new LookTargets(pawn), MessageTypeDefOf.NegativeEvent);
-
-            Log.Message($"[KitchenFires] Butchering accident for {pawn.Name}: {injuryType} {targetPart.Label} with severity {severity:F2}");
+            else if (severityRoll >= 0.75f)
+            {
+                // 20% chance: Finger amputation  
+                var targetPart = GetTargetBodyPart(pawn, false);
+                if (targetPart != null)
+                {
+                    var injury = HediffMaker.MakeHediff(HediffDefOf.MissingBodyPart, pawn, targetPart);
+                    injury.Severity = severity;
+                    pawn.health.AddHediff(injury);
+                    
+                    Messages.Message($"{pawn.NameShortColored} severed their finger while butchering!",
+                        new LookTargets(pawn), MessageTypeDefOf.NegativeEvent);
+                    Log.Message($"[KitchenFires] Finger amputation for {pawn.Name}: {targetPart.Label} with severity {severity:F2}");
+                }
+            }
+            else if (severityRoll >= 0.45f)
+            {
+                // 30% chance: Hand cut
+                var targetPart = GetTargetBodyPart(pawn, true);
+                if (targetPart != null)
+                {
+                    var injury = HediffMaker.MakeHediff(HediffDefOf.Cut, pawn, targetPart);
+                    injury.Severity = severity;
+                    pawn.health.AddHediff(injury);
+                    
+                    Messages.Message($"{pawn.NameShortColored} cut their hand while butchering!",
+                        new LookTargets(pawn), MessageTypeDefOf.NegativeEvent);
+                    Log.Message($"[KitchenFires] Hand cut for {pawn.Name}: {targetPart.Label} with severity {severity:F2}");
+                }
+            }
+            else
+            {
+                // 45% chance: Finger cut
+                var targetPart = GetTargetBodyPart(pawn, false);
+                if (targetPart != null)
+                {
+                    var injury = HediffMaker.MakeHediff(HediffDefOf.Cut, pawn, targetPart);
+                    injury.Severity = severity;
+                    pawn.health.AddHediff(injury);
+                    
+                    Messages.Message($"{pawn.NameShortColored} cut their finger while butchering!",
+                        new LookTargets(pawn), MessageTypeDefOf.NegativeEvent);
+                    Log.Message($"[KitchenFires] Finger cut for {pawn.Name}: {targetPart.Label} with severity {severity:F2}");
+                }
+            }
         }
 
         private static BodyPartRecord GetTargetBodyPart(Pawn pawn, bool preferHand)

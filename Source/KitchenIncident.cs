@@ -20,12 +20,12 @@ namespace KitchenFires
             var riskAssessment = CalculateRisks(pawn, cookingSkill);
 
             // Debug logging
-            Log.Message($"[KitchenFires] Risk check for {pawn.Name}: Fire={riskAssessment.FireRisk:P}, Burn={riskAssessment.BurnRisk:P}, Skill={cookingSkill.Level}");
+            //Log.Message($"[KitchenFires] Risk check for {pawn.Name}: Fire={riskAssessment.FireRisk:P}, Burn={riskAssessment.BurnRisk:P}, Skill={cookingSkill.Level}");
 
             // Check for kitchen fire first (more dramatic)
             if (Rand.Chance(riskAssessment.FireRisk))
             {
-                Log.Message($"[KitchenFires] Fire incident triggered for {pawn.Name}!");
+                //Log.Message($"[KitchenFires] Fire incident triggered for {pawn.Name}!");
                 TriggerKitchenFire(pawn, riskAssessment.FireSeverity);
                 return;
             }
@@ -33,7 +33,7 @@ namespace KitchenFires
             // Check for burn injury
             if (Rand.Chance(riskAssessment.BurnRisk))
             {
-                Log.Message($"[KitchenFires] Burn incident triggered for {pawn.Name}!");
+                //Log.Message($"[KitchenFires] Burn incident triggered for {pawn.Name}!");
                 TriggerBurnInjury(pawn, riskAssessment.BurnSeverity);
                 return;
             }

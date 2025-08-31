@@ -45,13 +45,23 @@ namespace KitchenFires
                         Pawn actor = toil.actor;
                         if (actor != null && actor.IsColonist && actor.jobs.curDriver is JobDriver_DoBill doBillDriver)
                         {
-                            Log.Message($"[KitchenFires] Recipe work tick for {actor.Name}");
+                            //Log.Message($"[KitchenFires] Recipe work tick for {actor.Name}");
                             
                             var bill = doBillDriver.job?.bill;
-                            if (bill?.recipe != null && KitchenIncidentUtility.IsCookingRecipe(bill.recipe))
+                            if (bill?.recipe != null)
                             {
-                                Log.Message($"[KitchenFires] Cooking recipe work: {bill.recipe.defName} for {actor.Name}");
-                                KitchenIncidentUtility.CheckForKitchenIncident(actor);
+                                // Prioritize butchering over cooking - butchering is more specific
+                                if (ButcheringAccidentUtility.IsButcheringRecipe(bill.recipe))
+                                {
+                                    //Log.Message($"[KitchenFires] Butchering recipe work: {bill.recipe.defName} for {actor.Name}");
+                                    ButcheringAccidentUtility.CheckForButcheringAccident(actor, bill.recipe);
+                                }
+                                // Only check for cooking if it's NOT a butchering recipe
+                                else if (KitchenIncidentUtility.IsCookingRecipe(bill.recipe))
+                                {
+                                    //Log.Message($"[KitchenFires] Cooking recipe work: {bill.recipe.defName} for {actor.Name}");
+                                    KitchenIncidentUtility.CheckForKitchenIncident(actor);
+                                }
                             }
                         }
                     }
@@ -69,7 +79,6 @@ namespace KitchenFires
     }
 
     // Patch for ankle sprains when climbing over obstacles
-    // Patch for ankle sprains when climbing over obstacles
     [HarmonyPatch(typeof(Pawn_PathFollower), "TryEnterNextPathCell")]
     public static class Pawn_PathFollower_TryEnterNextPathCell_Patch
     {
@@ -82,8 +91,13 @@ namespace KitchenFires
             
             if (pawnField?.GetValue(__instance) is Pawn pawn)
             {
-                AnkleSprainIncidentUtility.CheckForAnkleSprain(pawn);
+                // Evaluate the cell being entered, not the current position
+                var nextCell = __instance.nextCell;
+                //Log.Message($"[KitchenFires] AnkleSprain: TryEnterNextPathCell postfix for {pawn.LabelShort} -> {nextCell}");
+                AnkleSprainIncidentUtility.CheckForAnkleSprain(pawn, nextCell);
             }
         }
     }
+
+    
 }

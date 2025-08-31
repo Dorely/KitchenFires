@@ -8,118 +8,104 @@ namespace KitchenFires
 {
     public static class AnkleSprainIncidentUtility
     {
-        private const float BASE_SPRAIN_CHANCE = 1.00005f; // 0.005% base chance per difficult cell
+        private const float BASE_SPRAIN_CHANCE = 0.00005f; // 0.005% base chance per difficult cell
+        //private const float BASE_SPRAIN_CHANCE = 0.50005f; // 0.005% base chance per difficult cell
 
+        // Backward-compatible entry that checks the pawn's current cell
         public static void CheckForAnkleSprain(Pawn pawn)
         {
+            CheckForAnkleSprain(pawn, pawn.Position);
+        }
+
+        // Preferred entry that evaluates the target cell (e.g., the cell being entered)
+        public static void CheckForAnkleSprain(Pawn pawn, IntVec3 cell)
+        {
             if (!pawn.IsColonist || pawn.Dead || pawn.Downed) return;
+            if (pawn.Map == null) return;
 
-            // Check if the terrain or obstacles make movement difficult
-            TerrainDef terrain = pawn.Position.GetTerrain(pawn.Map);
-            var buildings = pawn.Position.GetThingList(pawn.Map);
+            // Check if there are climbable objects in the cell
+            var things = cell.GetThingList(pawn.Map);
             
-            bool isDifficultTerrain = IsTerrainDifficult(terrain) || HasObstacles(buildings);
-            if (!isDifficultTerrain) return;
+            bool hasClimbableObjects = HasClimbableObjects(things);
+            if (!hasClimbableObjects)
+            {
+                //Log.Message($"[KitchenFires] AnkleSprain: Skipping at {cell} - no climbable objects found");
+                return;
+            }
 
-            var riskAssessment = CalculateSprinRisks(pawn, terrain, buildings);
+            var riskAssessment = CalculateSprainRisks(pawn, things);
             
             // Debug logging
-            Log.Message($"[KitchenFires] Ankle sprain risk check for {pawn.Name}: Risk={riskAssessment.SprainRisk:P}");
+            //Log.Message($"[KitchenFires] Ankle sprain risk check for {pawn.Name}: Risk={riskAssessment.SprainRisk:P}");
 
             if (Rand.Chance(riskAssessment.SprainRisk))
             {
-                Log.Message($"[KitchenFires] Ankle sprain triggered for {pawn.Name}!");
+                //Log.Message($"[KitchenFires] Ankle sprain triggered for {pawn.Name}!");
                 TriggerAnkleSprain(pawn, riskAssessment.SprainSeverity);
             }
         }
 
-        private static bool IsTerrainDifficult(TerrainDef terrain)
-        {
-            // Check if terrain has movement penalties
-            return terrain.extraDraftedPerceivedPathCost > 0 ||
-                   terrain.extraNonDraftedPerceivedPathCost > 0 ||
-                   terrain.HasTag("Rough") ||
-                   terrain.HasTag("Sand") ||
-                   terrain.HasTag("Mud");
-        }
 
-        private static bool HasObstacles(List<Thing> things)
+        private static bool HasClimbableObjects(List<Thing> things)
         {
             foreach (Thing thing in things)
             {
-                // Check for buildings that slow movement but are passable
-                if (thing is Building building && building.def.passability == Traversability.Standable)
+                if (thing?.def == null) continue;
+                
+                // Check for climbable objects using passability and pathCost
+                // PassThroughOnly means you can walk through but it slows movement (chunks, debris)
+                if (thing.def.passability == Traversability.PassThroughOnly && thing.def.pathCost > 10)
                 {
-                    if (building.def.defName.ToLower().Contains("chunk") ||
-                        building.def.defName.ToLower().Contains("debris") ||
-                        building.def.pathCost > 0)
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
             return false;
         }
 
-        private static AnkleRiskAssessment CalculateSprinRisks(Pawn pawn, TerrainDef terrain, List<Thing> buildings)
+        private static AnkleRiskAssessment CalculateSprainRisks(Pawn pawn, List<Thing> things)
         {
-            // Calculate base difficulty from terrain and obstacles
-            float terrainMultiplier = CalculateTerrainDifficultyMultiplier(terrain, buildings);
+            // Calculate base difficulty from climbable objects
+            float climbingMultiplier = CalculateClimbingDifficultyMultiplier(things);
             
-            // Pawn-specific factors
-            float skillMultiplier = CalculateMovementSkillMultiplier(pawn);
+            // Pawn-specific factors (excluding skills)
             float traitMultiplier = CalculateAnkleTraitMultiplier(pawn);
             float moodMultiplier = CalculateAnkleMoodMultiplier(pawn);
             float ageMultiplier = CalculateAgeMultiplier(pawn);
 
-            float totalMultiplier = terrainMultiplier * skillMultiplier * traitMultiplier * moodMultiplier * ageMultiplier;
+            float totalMultiplier = climbingMultiplier * traitMultiplier * moodMultiplier * ageMultiplier;
+
+            float risk = BASE_SPRAIN_CHANCE * totalMultiplier;
+            // In DevMode, boost risk to aid testing
+            if (Prefs.DevMode)
+            {
+                risk *= 10f;
+            }
+            risk = Mathf.Clamp01(risk);
 
             return new AnkleRiskAssessment
             {
-                SprainRisk = BASE_SPRAIN_CHANCE * totalMultiplier,
-                SprainSeverity = CalculateAnkleSprainSeverity(pawn, terrainMultiplier)
+                SprainRisk = risk,
+                SprainSeverity = CalculateAnkleSprainSeverity(pawn, climbingMultiplier)
             };
         }
 
-        private static float CalculateTerrainDifficultyMultiplier(TerrainDef terrain, List<Thing> buildings)
+        private static float CalculateClimbingDifficultyMultiplier(List<Thing> things)
         {
             float multiplier = 1.0f;
             
-            // Terrain difficulty
-            if (terrain.extraDraftedPerceivedPathCost > 0 || terrain.extraNonDraftedPerceivedPathCost > 0)
-                multiplier += 2.0f;
-            
-            if (terrain.HasTag("Rough"))
-                multiplier += 1.5f;
-            
-            if (terrain.HasTag("Sand") || terrain.HasTag("Mud"))
-                multiplier += 1.0f;
-
-            // Building obstacles
-            foreach (Thing thing in buildings)
+            // Check each climbable object and add difficulty based on pathCost and passability
+            foreach (Thing thing in things)
             {
-                if (thing is Building building && building.def.pathCost > 0)
-                {
-                    multiplier += building.def.pathCost / 50f; // Scale path cost
-                    break; // Only count one obstacle per cell
-                }
+                if (thing?.def == null) continue;
+
+                // Higher pathCost = more difficult to climb over
+                multiplier += thing.def.pathCost / 20f; // Scale factor for PassThroughOnly objects
+                break;
             }
 
             return multiplier;
         }
 
-        private static float CalculateMovementSkillMultiplier(Pawn pawn)
-        {
-            // Use mining skill as a proxy for physical coordination/sure-footedness
-            var miningSkill = pawn.skills?.GetSkill(SkillDefOf.Mining);
-            if (miningSkill == null) return 1.0f;
-
-            // Higher skill = less risk
-            if (miningSkill.Level >= 10) return 0.5f;
-            if (miningSkill.Level >= 6) return 0.7f;
-            if (miningSkill.Level >= 3) return 1.0f;
-            return 1.5f; // Unskilled pawns are more clumsy
-        }
 
         private static float CalculateAnkleTraitMultiplier(Pawn pawn)
         {
@@ -129,18 +115,22 @@ namespace KitchenFires
 
             foreach (var trait in pawn.story.traits.allTraits)
             {
-                // Use traits that definitely exist in RimWorld
+                // Keep to stable, known trait defs in 1.6
                 if (trait.def == TraitDefOf.Brawler)
-                    multiplier *= 0.8f; // Brawlers are physically coordinated
-                else if (trait.def.defName == "Careful")
-                    multiplier *= 0.7f; // Careful pawns watch their step
+                    multiplier *= 0.9f; // Brawlers tend to have decent footwork
                 else if (trait.def.defName == "Nimble")
-                    multiplier *= 0.6f; // Nimble pawns less likely to trip
-                else if (trait.def.defName == "SlowWalker")
-                    multiplier *= 1.4f; // Slow walkers more prone to accidents
+                    multiplier *= 0.75f; // Nimble reduces missteps notably
+                // Avoid using removed/unstable trait names like CarefulShooter/Jogger/etc.
             }
 
-            return multiplier;
+            // Moving capacity (injuries, prosthetics) affects risk
+            float moving = pawn.health?.capacities?.GetLevel(PawnCapacityDefOf.Moving) ?? 1f;
+            float moveCapMul = moving >= 1f
+                ? Mathf.Lerp(1.0f, 0.9f, Mathf.Clamp01(moving - 1f)) // bionic/supra-normal: tiny reduction
+                : Mathf.Lerp(1.6f, 1.0f, Mathf.Clamp01(moving));     // impaired movement increases risk
+            multiplier *= moveCapMul;
+
+            return Mathf.Clamp(multiplier, 0.5f, 1.7f);
         }
 
         private static float CalculateAnkleMoodMultiplier(Pawn pawn)
@@ -180,7 +170,7 @@ namespace KitchenFires
                 if (ageInYears > 50)
                     baseSeverity *= 1.0f + (ageInYears - 50) * 0.01f;
             }
-            
+
             return Mathf.Clamp(baseSeverity, 0.1f, 0.6f);
         }
 
@@ -195,7 +185,7 @@ namespace KitchenFires
                 if (targetPart == null) return;
             }
 
-            // Create ankle sprain hediff (we'll create a custom one)
+            // Create ankle sprain hediff if available; otherwise fall back to generic injury
             var sprain = HediffMaker.MakeHediff(DefDatabase<HediffDef>.GetNamed("AnkleSprain", false), pawn, targetPart);
             if (sprain == null)
             {
@@ -209,7 +199,7 @@ namespace KitchenFires
 
             // Send message
             string severityDesc = severity > 0.4f ? "severe" : severity > 0.25f ? "moderate" : "mild";
-            Messages.Message($"{pawn.NameShortColored} sprained their ankle while climbing over obstacles!", 
+            Messages.Message($"{pawn.NameShortColored} sprained their ankle while climbing over an obstacle!", 
                 new LookTargets(pawn), MessageTypeDefOf.NegativeEvent);
 
             Log.Message($"[KitchenFires] Ankle sprain triggered for {pawn.Name} on {targetPart.Label} with severity {severity:F2}");

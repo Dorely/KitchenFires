@@ -65,4 +65,65 @@
     </injuryProps>
   </HediffDef>
 
+  <!-- Kitchen Incident Definitions -->
+  <IncidentDef>
+    <defName>KitchenFire_Small</defName>
+    <label>kitchen fire (small)</label>
+    <category>ThreatSmall</category>
+    <targetTags>
+      <li>Map_PlayerHome</li>
+    </targetTags>
+    <workerClass>KitchenFires.IncidentWorker_KitchenFire_Small</workerClass>
+    <baseChance>1.5</baseChance>
+    <minRefireDays>2</minRefireDays>
+    <letterText>A small kitchen fire has started while {0} was cooking! The flames are manageable but could spread if not handled quickly.</letterText>
+    <letterLabel>Kitchen fire</letterLabel>
+    <letterDef>NegativeEvent</letterDef>
+  </IncidentDef>
+
+  <IncidentDef>
+    <defName>KitchenFire_Large</defName>
+    <label>kitchen fire (large)</label>
+    <category>ThreatSmall</category>
+    <targetTags>
+      <li>Map_PlayerHome</li>
+    </targetTags>
+    <workerClass>KitchenFires.IncidentWorker_KitchenFire_Large</workerClass>
+    <baseChance>0.8</baseChance>
+    <minRefireDays>3</minRefireDays>
+    <letterText>A dangerous kitchen fire has erupted while {0} was cooking! The flames are large and spreading rapidly through the cooking area.</letterText>
+    <letterLabel>Kitchen fire</letterLabel>
+    <letterDef>NegativeEvent</letterDef>
+  </IncidentDef>
+
+  <IncidentDef>
+    <defName>KitchenExplosion</defName>
+    <label>kitchen explosion</label>
+    <category>ThreatSmall</category>
+    <targetTags>
+      <li>Map_PlayerHome</li>
+    </targetTags>
+    <workerClass>KitchenFires.IncidentWorker_KitchenExplosion</workerClass>
+    <baseChance>0.3</baseChance>
+    <minRefireDays>5</minRefireDays>
+    <letterText>A small explosion has erupted from the cooking equipment while {0} was working! Cooking gas or overheated equipment has caused a dangerous blast.</letterText>
+    <letterLabel>Kitchen explosion</letterLabel>
+    <letterDef>ThreatSmall</letterDef>
+  </IncidentDef>
+
+  <IncidentDef>
+    <defName>KitchenBurn</defName>
+    <label>cooking burn</label>
+    <category>ThreatSmall</category>
+    <targetTags>
+      <li>Map_PlayerHome</li>
+    </targetTags>
+    <workerClass>KitchenFires.IncidentWorker_KitchenBurn</workerClass>
+    <baseChance>2.2</baseChance>
+    <minRefireDays>1</minRefireDays>
+    <letterText>{0} has suffered a burn injury while cooking! Hot oil, steam, or cooking surfaces have caused a painful burn.</letterText>
+    <letterLabel>Cooking accident</letterLabel>
+    <letterDef>NegativeEvent</letterDef>
+  </IncidentDef>
+
 </Defs>

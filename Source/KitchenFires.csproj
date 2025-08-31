@@ -64,6 +64,10 @@
     <Compile Include="KitchenIncident.cs" />
     <Compile Include="AnkleSprainIncident.cs" />
     <Compile Include="ButcheringAccidentUtility.cs" />
+    <Compile Include="KitchenIncidentQueue.cs" />
+    <Compile Include="IncidentWorkers.cs" />
+    <Compile Include="KitchenFiresGameComponent.cs" />
+    <Compile Include="KitchenFiresDebug.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

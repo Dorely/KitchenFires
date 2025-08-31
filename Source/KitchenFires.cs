@@ -9,14 +9,21 @@ using UnityEngine;
 
 namespace KitchenFires
 {
-    [StaticConstructorOnStartup]
-    public class KitchenFiresMod
+    public class KitchenFiresMod : Mod
     {
-        static KitchenFiresMod()
+        public KitchenFiresMod(ModContentPack content) : base(content)
+        {
+        }
+    }
+
+    [StaticConstructorOnStartup]
+    public class KitchenFiresModStartup
+    {
+        static KitchenFiresModStartup()
         {
             var harmony = new Harmony("com.kitchenfires.mod");
             harmony.PatchAll();
-            Log.Message("[KitchenFires] Mod initialized with Harmony patches.");
+            Log.Message("[KitchenFires] Mod initialized with Harmony patches and GameComponent.");
         }
     }
 

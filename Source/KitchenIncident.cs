@@ -15,17 +15,23 @@ namespace KitchenFires
         {
             if (!pawn.IsColonist || pawn.Dead || pawn.Downed) return;
 
+            // First priority: Check for queued storyteller incidents
+            if (KitchenIncidentQueue.TryExecuteQueuedIncident(pawn))
+            {
+                return; // Queued incident was executed
+            }
+
             var cookingSkill = pawn.skills.GetSkill(SkillDefOf.Cooking);
             var riskAssessment = CalculateIncidentRisk(pawn, cookingSkill);
 
-            // Debug logging
-            //Log.Message($"[KitchenFires] Risk check for {pawn.Name}: Incident={riskAssessment.IncidentRisk:P}, Skill={cookingSkill.Level}");
+            // Reduced chance for immediate incidents (30% of original rate)
+            // This maintains some spontaneity while letting storyteller drive most incidents
+            float reducedRisk = riskAssessment.IncidentRisk * 0.3f;
 
-            // Single roll to determine if any incident occurs
-            if (Rand.Chance(riskAssessment.IncidentRisk))
+            if (Rand.Chance(reducedRisk))
             {
-                //Log.Message($"[KitchenFires] Kitchen incident triggered for {pawn.Name}!");
-                TriggerKitchenIncident(pawn, riskAssessment);
+                Log.Message($"[KitchenFires] Immediate kitchen incident triggered for {pawn.Name}!");
+                TriggerImmediateKitchenIncident(pawn, riskAssessment);
                 return;
             }
 
@@ -117,6 +123,41 @@ namespace KitchenFires
             }
 
             return multiplier;
+        }
+
+        private static void TriggerImmediateKitchenIncident(Pawn pawn, KitchenRiskAssessment riskAssessment)
+        {
+            // Select incident type based on severity roll
+            float severityRoll = Rand.Value;
+            IncidentDef incidentDef;
+            
+            if (severityRoll >= 0.95f)
+            {
+                incidentDef = DefDatabase<IncidentDef>.GetNamed("KitchenExplosion");
+            }
+            else if (severityRoll >= 0.80f)
+            {
+                incidentDef = DefDatabase<IncidentDef>.GetNamed("KitchenFire_Large");
+            }
+            else if (severityRoll >= 0.50f)
+            {
+                incidentDef = DefDatabase<IncidentDef>.GetNamed("KitchenFire_Small");
+            }
+            else
+            {
+                incidentDef = DefDatabase<IncidentDef>.GetNamed("KitchenBurn");
+            }
+            
+            // Create incident parameters
+            var parms = new IncidentParms();
+            parms.target = pawn.Map;
+            parms.forced = true; // Mark as immediate execution
+            
+            // Store triggering pawn info in custom text for now
+            parms.customLetterText = $"triggeringPawn:{pawn.thingIDNumber}";
+            
+            // Execute through IncidentWorker for proper storyteller integration
+            incidentDef.Worker.TryExecute(parms);
         }
 
         private static void TriggerKitchenIncident(Pawn pawn, KitchenRiskAssessment riskAssessment)

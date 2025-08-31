@@ -3,6 +3,7 @@ using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using Verse.AI;
 
 namespace KitchenFires
 {
@@ -165,6 +166,12 @@ namespace KitchenFires
             var carried = pawn.carryTracker?.CarriedThing;
             if (carried != null)
             {
+                // Precompute scatter cells around the target cell
+                var scatterCells = GenRadial.RadialCellsAround(cell, 2, true)
+                    .Where(c => c.InBounds(map))
+                    .Take(12)
+                    .ToList();
+
                 if (pawn.carryTracker.TryDropCarriedThing(cell, ThingPlaceMode.Near, out Thing dropped))
                 {
                     if (dropped != null)
@@ -174,6 +181,7 @@ namespace KitchenFires
                         int piles = Mathf.Clamp(desiredPiles, 2, Mathf.Max(2, total));
 
                         int remaining = total;
+                        int scatterIndex = 0;
                         for (int i = 0; i < piles - 1 && remaining > 1; i++)
                         {
                             int maxForThis = Mathf.Max(1, remaining - (piles - 1 - i));
@@ -181,18 +189,35 @@ namespace KitchenFires
                             if (amount >= remaining) break;
                             Thing piece = dropped.SplitOff(amount);
                             remaining -= amount;
-                            GenPlace.TryPlaceThing(piece, cell, map, ThingPlaceMode.Near);
+
+                            // Choose a scatter cell cycling through candidates
+                            IntVec3 target = (scatterCells.Count > 0) ? scatterCells[scatterIndex % scatterCells.Count] : cell;
+                            scatterIndex++;
+
+                            // Place piece directly if possible, otherwise near
+                            if (target.Standable(map))
+                                GenPlace.TryPlaceThing(piece, target, map, ThingPlaceMode.Direct);
+                            else
+                                GenPlace.TryPlaceThing(piece, target, map, ThingPlaceMode.Near);
+
                             MaybeDamageThing(piece, pawn, severity);
                             MaybeTriggerExplosion(piece, pawn, severity);
                         }
+                        // Damage the main dropped remainder as well
                         MaybeDamageThing(dropped, pawn, severity);
                         MaybeTriggerExplosion(dropped, pawn, severity);
 
                         Messages.Message($"{pawn.NameShortColored} tripped and dropped {dropped.LabelNoCount} in a messy pile!",
                             new LookTargets(dropped), MessageTypeDefOf.NegativeEvent);
+
+                        // Interrupt current job so pawn doesn't immediately re-pick the items
+                        pawn.jobs?.EndCurrentJob(JobCondition.InterruptForced);
                     }
                 }
             }
+
+            // Stagger the pawn briefly to simulate being stunned
+            pawn.stances?.stagger?.StaggerFor(Rand.RangeInclusive(60, 120));
         }
 
         private static void MaybeDamageThing(Thing thing, Pawn instigator, float severity)

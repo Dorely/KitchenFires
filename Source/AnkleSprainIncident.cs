@@ -78,7 +78,7 @@ namespace KitchenFires
             // In DevMode, boost risk to aid testing
             if (Prefs.DevMode)
             {
-                risk *= 10f;
+                risk *= 100f;
             }
             risk = Mathf.Clamp01(risk);
 

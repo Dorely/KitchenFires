@@ -8,7 +8,7 @@ namespace KitchenFires
 {
     public static class ButcheringAccidentUtility
     {
-        private const float BASE_ACCIDENT_CHANCE = 0.0005f; // 0.05% base chance per butchering action
+        private const float BASE_ACCIDENT_CHANCE = 0.00005f; // 0.005% base chance per butchering action
 
         public static void CheckForButcheringAccident(Pawn pawn, RecipeDef recipe)
         {
@@ -57,7 +57,7 @@ namespace KitchenFires
             // In DevMode, boost risk to aid testing
             if (Prefs.DevMode)
             {
-                risk *= 10f;
+                risk *= 100f;
             }
             
             risk = Mathf.Clamp01(risk);

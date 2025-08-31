@@ -9,32 +9,23 @@ namespace KitchenFires
 {
     public static class KitchenIncidentUtility
     {
-        private const float BASE_FIRE_CHANCE = 0.00008f; // 0.008% base chance
-        private const float BASE_BURN_CHANCE = 0.00012f; // 0.012% base chance
+        private const float BASE_INCIDENT_CHANCE = 0.00002f; // 0.002% base chance for any incident
 
         public static void CheckForKitchenIncident(Pawn pawn)
         {
             if (!pawn.IsColonist || pawn.Dead || pawn.Downed) return;
 
             var cookingSkill = pawn.skills.GetSkill(SkillDefOf.Cooking);
-            var riskAssessment = CalculateRisks(pawn, cookingSkill);
+            var riskAssessment = CalculateIncidentRisk(pawn, cookingSkill);
 
             // Debug logging
-            //Log.Message($"[KitchenFires] Risk check for {pawn.Name}: Fire={riskAssessment.FireRisk:P}, Burn={riskAssessment.BurnRisk:P}, Skill={cookingSkill.Level}");
+            //Log.Message($"[KitchenFires] Risk check for {pawn.Name}: Incident={riskAssessment.IncidentRisk:P}, Skill={cookingSkill.Level}");
 
-            // Check for kitchen fire first (more dramatic)
-            if (Rand.Chance(riskAssessment.FireRisk))
+            // Single roll to determine if any incident occurs
+            if (Rand.Chance(riskAssessment.IncidentRisk))
             {
-                //Log.Message($"[KitchenFires] Fire incident triggered for {pawn.Name}!");
-                TriggerKitchenFire(pawn, riskAssessment.FireSeverity);
-                return;
-            }
-
-            // Check for burn injury
-            if (Rand.Chance(riskAssessment.BurnRisk))
-            {
-                //Log.Message($"[KitchenFires] Burn incident triggered for {pawn.Name}!");
-                TriggerBurnInjury(pawn, riskAssessment.BurnSeverity);
+                //Log.Message($"[KitchenFires] Kitchen incident triggered for {pawn.Name}!");
+                TriggerKitchenIncident(pawn, riskAssessment);
                 return;
             }
 
@@ -47,7 +38,7 @@ namespace KitchenFires
             }
         }
 
-        private static KitchenRiskAssessment CalculateRisks(Pawn pawn, SkillRecord cookingSkill)
+        private static KitchenRiskAssessment CalculateIncidentRisk(Pawn pawn, SkillRecord cookingSkill)
         {
             float skillMultiplier = CalculateSkillMultiplier(cookingSkill.Level);
             float passionMultiplier = CalculatePassionMultiplier(cookingSkill.passion);
@@ -56,12 +47,22 @@ namespace KitchenFires
 
             float totalMultiplier = skillMultiplier * passionMultiplier * moodMultiplier * traitMultiplier;
 
+            // Calculate base incident risk
+            float incidentRisk = BASE_INCIDENT_CHANCE * totalMultiplier;
+            
+            // In DevMode, boost risk to aid testing
+            if (Prefs.DevMode)
+            {
+                incidentRisk *= 100f;
+            }
+            
+            incidentRisk = Mathf.Clamp01(incidentRisk);
+
             return new KitchenRiskAssessment
             {
-                FireRisk = BASE_FIRE_CHANCE * totalMultiplier,
-                BurnRisk = BASE_BURN_CHANCE * totalMultiplier,
-                FireSeverity = CalculateFireSeverity(cookingSkill.Level),
-                BurnSeverity = CalculateBurnSeverity(cookingSkill.Level)
+                IncidentRisk = incidentRisk,
+                SeverityMultiplier = totalMultiplier,
+                SkillLevel = cookingSkill.Level
             };
         }
 
@@ -118,14 +119,34 @@ namespace KitchenFires
             return multiplier;
         }
 
-        private static float CalculateFireSeverity(int skillLevel)
+        private static void TriggerKitchenIncident(Pawn pawn, KitchenRiskAssessment riskAssessment)
         {
-            // Beginners: larger fires (0.3-0.8), experts: tiny fires (0.1-0.3)
-            float maxSeverity = Mathf.Lerp(0.8f, 0.3f, skillLevel / 20f);
-            float minSeverity = Mathf.Lerp(0.3f, 0.1f, skillLevel / 20f);
-            return Rand.Range(minSeverity, maxSeverity);
+            // Pure random roll for incident severity - skill only affects occurrence probability
+            float severityRoll = Rand.Value;
+            
+            // Determine incident type based on fixed severity thresholds
+            if (severityRoll >= 0.95f)
+            {
+                // 5% chance: Small explosion
+                TriggerKitchenExplosion(pawn);
+            }
+            else if (severityRoll >= 0.80f)
+            {
+                // 15% chance: Large fire
+                TriggerKitchenFire(pawn, Rand.Range(0.6f, 1.0f), true);
+            }
+            else if (severityRoll >= 0.50f)
+            {
+                // 30% chance: Small fire
+                TriggerKitchenFire(pawn, Rand.Range(0.3f, 0.6f), false);
+            }
+            else
+            {
+                // 50% chance: Minor burn
+                TriggerBurnInjury(pawn, CalculateBurnSeverity(riskAssessment.SkillLevel));
+            }
         }
-
+        
         private static float CalculateBurnSeverity(int skillLevel)
         {
             // Lower skill = potentially more severe burns
@@ -134,15 +155,16 @@ namespace KitchenFires
             return Rand.Range(minSeverity, maxSeverity);
         }
 
-        private static void TriggerKitchenFire(Pawn pawn, float severity)
+        private static void TriggerKitchenFire(Pawn pawn, float severity, bool isLarge = false)
         {
             Map map = pawn.Map;
             if (map == null) return;
 
-            // Find a suitable spot near the pawn for the fire
+            // Find suitable spots near the pawn for the fire
             IntVec3 firePos = pawn.Position;
+            var fireCells = new List<IntVec3> { firePos };
             
-            // Try to find a nearby cooking station or flammable object
+            // Try to find nearby cooking stations or flammable objects
             var nearbyBuildings = GenRadial.RadialCellsAround(pawn.Position, 2, true)
                 .Where(c => c.InBounds(map) && c.GetFirstBuilding(map) != null)
                 .Where(c => IsCookingRelatedBuilding(c.GetFirstBuilding(map)))
@@ -151,18 +173,82 @@ namespace KitchenFires
             if (nearbyBuildings.Any())
             {
                 firePos = nearbyBuildings.RandomElement();
+                fireCells[0] = firePos;
             }
 
-            // Create the fire
-            Fire fire = (Fire)GenSpawn.Spawn(ThingDefOf.Fire, firePos, map);
-            fire.fireSize = severity;
+            // For large fires, create multiple fire spots
+            if (isLarge)
+            {
+                var additionalCells = GenRadial.RadialCellsAround(firePos, 1, true)
+                    .Where(c => c.InBounds(map) && c.Standable(map))
+                    .Take(Rand.Range(1, 3))
+                    .ToList();
+                fireCells.AddRange(additionalCells);
+            }
+
+            // Create the fire(s)
+            Fire primaryFire = null;
+            foreach (var cell in fireCells)
+            {
+                Fire fire = (Fire)GenSpawn.Spawn(ThingDefOf.Fire, cell, map);
+                fire.fireSize = severity * Rand.Range(0.8f, 1.2f);
+                if (primaryFire == null) primaryFire = fire;
+            }
 
             // Send message
-            string severityDesc = severity > 0.6f ? "large" : severity > 0.3f ? "moderate" : "small";
+            string severityDesc = isLarge ? "large" : severity > 0.4f ? "moderate" : "small";
             Messages.Message($"A {severityDesc} kitchen fire started while {pawn.NameShortColored} was cooking!", 
-                new LookTargets(fire), MessageTypeDefOf.NegativeEvent);
+                new LookTargets(primaryFire), MessageTypeDefOf.NegativeEvent);
 
-            Log.Message($"[KitchenFires] Kitchen fire triggered for {pawn.Name} with severity {severity:F2}");
+            Log.Message($"[KitchenFires] Kitchen fire triggered for {pawn.Name} with severity {severity:F2}, large: {isLarge}");
+        }
+
+        private static void TriggerKitchenExplosion(Pawn pawn)
+        {
+            Map map = pawn.Map;
+            if (map == null) return;
+
+            // Find the best spot for the explosion (cooking station if available)
+            IntVec3 explosionPos = pawn.Position;
+            var nearbyBuildings = GenRadial.RadialCellsAround(pawn.Position, 2, true)
+                .Where(c => c.InBounds(map) && c.GetFirstBuilding(map) != null)
+                .Where(c => IsCookingRelatedBuilding(c.GetFirstBuilding(map)))
+                .ToList();
+
+            if (nearbyBuildings.Any())
+            {
+                explosionPos = nearbyBuildings.RandomElement();
+            }
+
+            // Create a small explosion - similar to a chemfuel explosion but smaller
+            float explosionRadius = Rand.Range(1.5f, 2.5f);
+            GenExplosion.DoExplosion(
+                center: explosionPos,
+                map: map,
+                radius: explosionRadius,
+                damType: DamageDefOf.Flame,
+                instigator: pawn,
+                damAmount: Rand.Range(10, 25),
+                armorPenetration: -1f,
+                explosionSound: null,
+                weapon: null,
+                projectile: null,
+                intendedTarget: null,
+                postExplosionSpawnThingDef: ThingDefOf.Filth_Ash,
+                postExplosionSpawnChance: 0.5f,
+                postExplosionSpawnThingCount: Rand.Range(1, 3),
+                applyDamageToExplosionCellsNeighbors: false,
+                preExplosionSpawnThingDef: null,
+                preExplosionSpawnChance: 0f,
+                preExplosionSpawnThingCount: 0,
+                chanceToStartFire: 0.8f,
+                damageFalloff: true
+            );
+
+            Messages.Message($"A small explosion erupted from the cooking equipment while {pawn.NameShortColored} was working!", 
+                new LookTargets(explosionPos, map), MessageTypeDefOf.NegativeEvent);
+
+            Log.Message($"[KitchenFires] Kitchen explosion triggered for {pawn.Name} at {explosionPos}");
         }
 
         private static void TriggerBurnInjury(Pawn pawn, float severity)
@@ -234,9 +320,8 @@ namespace KitchenFires
 
     public struct KitchenRiskAssessment
     {
-        public float FireRisk;
-        public float BurnRisk;
-        public float FireSeverity;
-        public float BurnSeverity;
+        public float IncidentRisk;
+        public float SeverityMultiplier;
+        public int SkillLevel;
     }
 }

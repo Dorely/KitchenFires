@@ -101,7 +101,7 @@ namespace KitchenFires
                 // Evaluate the cell being entered, not the current position
                 var nextCell = __instance.nextCell;
                 //Log.Message($"[KitchenFires] AnkleSprain: TryEnterNextPathCell postfix for {pawn.LabelShort} -> {nextCell}");
-                AnkleSprainIncidentUtility.CheckForAnkleSprain(pawn, nextCell);
+                TrippingAccidentUtility.CheckForTrippingAccident(pawn, nextCell);
             }
         }
     }

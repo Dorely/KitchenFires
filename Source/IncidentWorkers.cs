@@ -393,43 +393,49 @@ namespace KitchenFires
     }
 
     // Ankle Sprain IncidentWorker
-    public class IncidentWorker_AnkleSprain : IncidentWorker_KitchenBase
+    public class IncidentWorker_TrippingAccident : IncidentWorker_KitchenBase
     {
         protected override bool TryExecuteWorker(IncidentParms parms)
         {
-            Log.Message($"[KitchenFires] IncidentWorker_AnkleSprain.TryExecuteWorker called - forced: {parms.forced}");
+            Log.Message($"[KitchenFires] IncidentWorker_TrippingAccident.TryExecuteWorker called - forced: {parms.forced}");
             
             if (!parms.forced)
             {
-                // Storyteller selected this incident - queue it for next movement over obstacles
-                Log.Message("[KitchenFires] Storyteller selected ankle sprain - queueing for next obstacle climb");
+                Log.Message("[KitchenFires] Storyteller selected tripping accident - queueing for next obstacle climb");
                 KitchenIncidentQueue.Add(def, parms);
                 return true;
             }
             
-            // Execute the actual incident
             Pawn triggeringPawn = GetTriggeringPawn(parms);
             if (triggeringPawn == null) return false;
             
-            // Create ankle sprain injury
-            var targetPart = GetAnkleBodyPart(triggeringPawn);
-            if (targetPart == null) 
+            // Calculate severity using the same logic as the utility for consistency
+            float terrainMul = 1.0f;
+            var things = triggeringPawn.Position.GetThingList(triggeringPawn.Map);
+            if (things != null)
             {
-                // Fallback to leg
-                targetPart = GetLegBodyPart(triggeringPawn);
-                if (targetPart == null) return false;
+                // rough proxy: higher pathCost nearby implies trickier footing
+                var obstruct = things.FirstOrDefault(t => t?.def != null && t.def.passability == Traversability.PassThroughOnly && t.def.pathCost > 10);
+                if (obstruct != null) terrainMul = 1.1f;
             }
+            float severity = Rand.Range(0.15f, 0.5f);
             
-            // Try to use custom AnkleSprain hediff, fallback to bruise
-            var sprain = HediffMaker.MakeHediff(DefDatabase<HediffDef>.GetNamed("AnkleSprain", false), triggeringPawn, targetPart);
-            if (sprain == null)
+            // Apply sprain and spill carried items
+            TrippingAccidentUtility.TripSpillCarriedItems(triggeringPawn, triggeringPawn.Position, severity);
+            
+            var targetPart = triggeringPawn.health.hediffSet.GetNotMissingParts().FirstOrDefault(p => p.def.defName.ToLower().Contains("ankle"))
+                             ?? triggeringPawn.health.hediffSet.GetNotMissingParts().FirstOrDefault(p => p.def.defName.ToLower().Contains("foot"))
+                             ?? triggeringPawn.health.hediffSet.GetNotMissingParts().FirstOrDefault(p => p.def.defName.ToLower().Contains("leg"));
+            if (targetPart != null)
             {
-                sprain = HediffMaker.MakeHediff(DefDatabase<HediffDef>.GetNamed("Bruise", false), triggeringPawn, targetPart);
-                if (sprain == null) return false;
+                var sprain = HediffMaker.MakeHediff(DefDatabase<HediffDef>.GetNamed("AnkleSprain", false), triggeringPawn, targetPart)
+                            ?? HediffMaker.MakeHediff(DefDatabase<HediffDef>.GetNamed("Bruise", false), triggeringPawn, targetPart);
+                if (sprain != null)
+                {
+                    sprain.Severity = severity;
+                    triggeringPawn.health.AddHediff(sprain);
+                }
             }
-            
-            sprain.Severity = Rand.Range(0.15f, 0.6f);
-            triggeringPawn.health.AddHediff(sprain);
             
             SendStandardLetter(parms, new LookTargets(triggeringPawn), triggeringPawn.NameShortColored);
             

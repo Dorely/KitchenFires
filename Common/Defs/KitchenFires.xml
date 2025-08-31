@@ -159,17 +159,17 @@
 
   <!-- Ankle Sprain Accident Definitions -->
   <IncidentDef>
-    <defName>AnkleSprainAccident</defName>
-    <label>sprained ankle</label>
+    <defName>TrippingAccident</defName>
+    <label>tripping accident</label>
     <category>ThreatSmall</category>
     <targetTags>
       <li>Map_PlayerHome</li>
     </targetTags>
-    <workerClass>KitchenFires.IncidentWorker_AnkleSprain</workerClass>
+    <workerClass>KitchenFires.IncidentWorker_TrippingAccident</workerClass>
     <baseChance>1.2</baseChance>
     <minRefireDays>0.5</minRefireDays>
-    <letterText>{0} has sprained their ankle while climbing over obstacles! Uneven terrain and climbable objects have caused a mobility injury.</letterText>
-    <letterLabel>Movement accident</letterLabel>
+    <letterText>{0} tripped while moving over obstacles, dropping what they were carrying and spraining an ankle.</letterText>
+    <letterLabel>Tripping accident</letterLabel>
     <letterDef>NegativeEvent</letterDef>
   </IncidentDef>
 

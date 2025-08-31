@@ -122,17 +122,17 @@ namespace KitchenFires
         }
         
         // Ankle Sprain Debug Actions
-        [DebugAction("Kitchen Fires", "Queue ankle sprain", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [DebugAction("Kitchen Fires", "Queue tripping accident", allowedGameStates = AllowedGameStates.PlayingOnMap)]
         public static void QueueAnkleSprain()
         {
             Map map = Find.CurrentMap;
             if (map == null) return;
             
-            var incidentDef = DefDatabase<IncidentDef>.GetNamed("AnkleSprainAccident");
+            var incidentDef = DefDatabase<IncidentDef>.GetNamed("TrippingAccident");
             var parms = new IncidentParms();
             parms.target = map;
             KitchenIncidentQueue.Add(incidentDef, parms);
-            Messages.Message("Ankle sprain queued - walk over obstacles to trigger it!", MessageTypeDefOf.NeutralEvent);
+            Messages.Message("Tripping accident queued - walk over obstacles to trigger it!", MessageTypeDefOf.NeutralEvent);
         }
         
         // Immediate testing for new accidents
@@ -161,7 +161,7 @@ namespace KitchenFires
             method?.Invoke(null, new object[] { pawn, riskAssessment });
         }
         
-        [DebugAction("Kitchen Fires", "Test immediate ankle sprain (select pawn first)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [DebugAction("Kitchen Fires", "Test immediate tripping accident (select pawn first)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
         public static void TestImmediateAnkleSprain()
         {
             Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
@@ -171,7 +171,7 @@ namespace KitchenFires
                 return;
             }
             
-            Messages.Message($"Testing immediate ankle sprain for {pawn.Name}", MessageTypeDefOf.NeutralEvent);
+            Messages.Message($"Testing immediate tripping accident for {pawn.Name}", MessageTypeDefOf.NeutralEvent);
             
             // Force trigger ankle sprain
             var riskAssessment = new AnkleRiskAssessment
@@ -181,7 +181,7 @@ namespace KitchenFires
             };
             
             // Use reflection to call the private method for testing
-            var method = typeof(AnkleSprainIncidentUtility).GetMethod("TriggerImmediateAnkleSprain", 
+            var method = typeof(TrippingAccidentUtility).GetMethod("TriggerImmediateTrippingAccident", 
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             method?.Invoke(null, new object[] { pawn, riskAssessment });
         }

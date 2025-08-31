@@ -62,7 +62,7 @@
   <ItemGroup>
     <Compile Include="KitchenFires.cs" />
     <Compile Include="KitchenIncident.cs" />
-    <Compile Include="AnkleSprainIncident.cs" />
+    <Compile Include="TrippingAccident.cs" />
     <Compile Include="ButcheringAccidentUtility.cs" />
     <Compile Include="KitchenIncidentQueue.cs" />
     <Compile Include="IncidentWorkers.cs" />

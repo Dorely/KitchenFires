@@ -112,7 +112,7 @@ namespace KitchenFires
                 case QueuedIncidentContext.Butchering:
                     return name.StartsWith("ButcheringAccident_");
                 case QueuedIncidentContext.Movement:
-                    return name == "AnkleSprainAccident";
+                    return name == "TrippingAccident";
                 default:
                     return false;
             }

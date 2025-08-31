@@ -89,30 +89,51 @@ namespace KitchenFires
         {
             Log.Message($"[KitchenFires] IncidentWorker_KitchenFire_Small.TryExecuteWorker called - forced: {parms.forced}");
             
-            // Check if this is being queued by storyteller or executed immediately
             if (!parms.forced)
             {
-                // Storyteller selected this incident - queue it for next cooking action
                 Log.Message("[KitchenFires] Storyteller selected kitchen fire - queueing for next cooking action");
                 KitchenIncidentQueue.Add(def, parms);
                 return true;
             }
             
-            // Execute the actual incident
             Pawn triggeringPawn = GetTriggeringPawn(parms);
             if (triggeringPawn == null) return false;
-            
+
             Map map = triggeringPawn.Map;
-            IntVec3 firePos = FindBestIncidentLocation(triggeringPawn);
             
-            // Create small fire
-            Fire fire = (Fire)GenSpawn.Spawn(ThingDefOf.Fire, firePos, map);
-            fire.fireSize = Rand.Range(0.3f, 0.6f);
+            // First try to ignite a nearby flammable object (not the pawn)
+            IntVec3? targetCell = null;
+            Thing targetThing = null;
             
-            // Send letter using storyteller system
-            SendStandardLetter(parms, new LookTargets(fire), triggeringPawn.NameShortColored);
-            
-            Log.Message($"[KitchenFires] Small kitchen fire created for {triggeringPawn.Name} at {firePos}");
+            foreach (var cell in GenRadial.RadialCellsAround(triggeringPawn.Position, 3, true))
+            {
+                if (!cell.InBounds(map)) continue;
+                var things = cell.GetThingList(map);
+                var flammable = things.FirstOrDefault(t => t.def.category != ThingCategory.Pawn && t.FlammableNow);
+                if (flammable != null)
+                {
+                    targetCell = cell;
+                    targetThing = flammable;
+                    break;
+                }
+            }
+
+            if (targetCell.HasValue)
+            {
+                float size = Rand.Range(0.3f, 0.6f);
+                if (FireUtility.TryStartFireIn(targetCell.Value, map, size, triggeringPawn))
+                {
+                    SendStandardLetter(parms, new LookTargets(targetCell.Value, map), triggeringPawn.NameShortColored);
+                    Log.Message($"[KitchenFires] Small kitchen fire started at {targetCell.Value} on {targetThing.LabelShort}");
+                    return true;
+                }
+            }
+
+            // Fallback: no suitable object found — attach fire to pawn
+            float attachSize = Rand.Range(0.15f, 0.3f);
+            triggeringPawn.TryAttachFire(attachSize, triggeringPawn);
+            SendStandardLetter(parms, new LookTargets(triggeringPawn), triggeringPawn.NameShortColored);
+            Log.Message($"[KitchenFires] No flammable object found; lit pawn {triggeringPawn.Name} on fire");
             return true;
         }
     }

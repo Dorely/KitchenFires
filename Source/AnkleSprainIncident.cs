@@ -34,7 +34,7 @@ namespace KitchenFires
             }
 
             // First priority: Check for queued storyteller incidents
-            if (KitchenIncidentQueue.TryExecuteQueuedIncident(pawn))
+            if (KitchenIncidentQueue.TryExecuteQueuedIncident(pawn, KitchenIncidentQueue.QueuedIncidentContext.Movement))
             {
                 return; // Queued incident was executed
             }
@@ -82,11 +82,6 @@ namespace KitchenFires
             float totalMultiplier = climbingMultiplier * traitMultiplier * moodMultiplier * ageMultiplier;
 
             float risk = BASE_SPRAIN_CHANCE * totalMultiplier;
-            // In DevMode, boost risk to aid testing
-            if (Prefs.DevMode)
-            {
-                risk *= 100f;
-            }
             risk = Mathf.Clamp01(risk);
 
             return new AnkleRiskAssessment

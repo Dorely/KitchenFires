@@ -19,7 +19,7 @@ namespace KitchenFires
             if (!IsButcheringRecipe(recipe)) return;
 
             // First priority: Check for queued storyteller incidents
-            if (KitchenIncidentQueue.TryExecuteQueuedIncident(pawn))
+            if (KitchenIncidentQueue.TryExecuteQueuedIncident(pawn, KitchenIncidentQueue.QueuedIncidentContext.Butchering))
             {
                 return; // Queued incident was executed
             }
@@ -60,13 +60,6 @@ namespace KitchenFires
             float totalMultiplier = skillMultiplier * traitMultiplier * healthMultiplier * moodMultiplier * recipeMultiplier;
 
             float risk = BASE_ACCIDENT_CHANCE * totalMultiplier;
-            
-            // In DevMode, boost risk to aid testing
-            if (Prefs.DevMode)
-            {
-                risk *= 100f;
-            }
-            
             risk = Mathf.Clamp01(risk);
 
             return new ButcheringRiskAssessment

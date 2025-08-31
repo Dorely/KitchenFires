@@ -43,6 +43,13 @@ namespace KitchenFires
 
     public static class KitchenIncidentQueue
     {
+        public enum QueuedIncidentContext
+        {
+            Cooking,
+            Butchering,
+            Movement
+        }
+
         private static List<QueuedKitchenIncident> queuedIncidents = new List<QueuedKitchenIncident>();
         
         public static int Count => queuedIncidents.Count;
@@ -59,24 +66,28 @@ namespace KitchenFires
             Messages.Message(foreshadowingMessage, MessageTypeDefOf.NeutralEvent);
         }
         
-        public static bool TryExecuteQueuedIncident(Pawn cookingPawn)
+        public static bool TryExecuteQueuedIncident(Pawn pawn, QueuedIncidentContext context)
         {
             CleanExpiredIncidents();
-            
             if (!queuedIncidents.Any())
                 return false;
-                
-            var incident = queuedIncidents.First();
-            queuedIncidents.RemoveAt(0);
-            
+
+            // Find the first incident compatible with this context without disturbing order otherwise
+            int index = queuedIncidents.FindIndex(qi => IsIncidentAllowedInContext(qi.def, context));
+            if (index < 0)
+                return false;
+
+            var incident = queuedIncidents[index];
+            queuedIncidents.RemoveAt(index);
+
             // Update incident parameters with current context
-            incident.parms.target = cookingPawn.Map;
+            incident.parms.target = pawn.Map;
             incident.parms.forced = true;
             
             // Store the triggering pawn for the incident worker
-            incident.parms.customLetterText = $"triggeringPawn:{cookingPawn.thingIDNumber}";
+            incident.parms.customLetterText = $"triggeringPawn:{pawn.thingIDNumber}";
             
-            Log.Message($"[KitchenFires] Executing queued kitchen incident: {incident.def.defName} for {cookingPawn.Name}");
+            Log.Message($"[KitchenFires] Executing queued kitchen incident: {incident.def.defName} for {pawn.Name}");
             
             // Execute through proper IncidentWorker for full storyteller integration
             bool result = incident.def.Worker.TryExecute(incident.parms);
@@ -88,6 +99,23 @@ namespace KitchenFires
             }
             
             return result;
+        }
+
+        private static bool IsIncidentAllowedInContext(IncidentDef def, QueuedIncidentContext context)
+        {
+            if (def == null) return false;
+            string name = def.defName ?? string.Empty;
+            switch (context)
+            {
+                case QueuedIncidentContext.Cooking:
+                    return name.StartsWith("KitchenFire_") || name == "KitchenExplosion" || name == "KitchenBurn";
+                case QueuedIncidentContext.Butchering:
+                    return name.StartsWith("ButcheringAccident_");
+                case QueuedIncidentContext.Movement:
+                    return name == "AnkleSprainAccident";
+                default:
+                    return false;
+            }
         }
         
         private static void CleanExpiredIncidents()

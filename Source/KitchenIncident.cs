@@ -16,7 +16,7 @@ namespace KitchenFires
             if (!pawn.IsColonist || pawn.Dead || pawn.Downed) return;
 
             // First priority: Check for queued storyteller incidents
-            if (KitchenIncidentQueue.TryExecuteQueuedIncident(pawn))
+            if (KitchenIncidentQueue.TryExecuteQueuedIncident(pawn, KitchenIncidentQueue.QueuedIncidentContext.Cooking))
             {
                 return; // Queued incident was executed
             }
@@ -55,13 +55,6 @@ namespace KitchenFires
 
             // Calculate base incident risk
             float incidentRisk = BASE_INCIDENT_CHANCE * totalMultiplier;
-            
-            // In DevMode, boost risk to aid testing
-            if (Prefs.DevMode)
-            {
-                incidentRisk *= 100f;
-            }
-            
             incidentRisk = Mathf.Clamp01(incidentRisk);
 
             return new KitchenRiskAssessment

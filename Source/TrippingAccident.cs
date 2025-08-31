@@ -164,54 +164,86 @@ namespace KitchenFires
             severity = Mathf.Clamp01(severity);
 
             var carried = pawn.carryTracker?.CarriedThing;
+            bool wickAlertSent = false;
             if (carried != null)
             {
-                // Precompute scatter cells around the target cell
-                var scatterCells = GenRadial.RadialCellsAround(cell, 2, true)
-                    .Where(c => c.InBounds(map))
-                    .Take(12)
-                    .ToList();
-
-                if (pawn.carryTracker.TryDropCarriedThing(cell, ThingPlaceMode.Near, out Thing dropped))
+                // Special case: carrying another pawn (rescue/carry). Drop them and inflict blunt injury.
+                if (carried is Pawn carriedPawn)
                 {
-                    if (dropped != null)
+                    if (pawn.carryTracker.TryDropCarriedThing(cell, ThingPlaceMode.Near, out Thing droppedThing))
                     {
-                        int total = dropped.stackCount;
-                        int desiredPiles = Mathf.Clamp(Mathf.RoundToInt(Mathf.Lerp(2f, 6f, severity)), 2, 10);
-                        int piles = Mathf.Clamp(desiredPiles, 2, Mathf.Max(2, total));
-
-                        int remaining = total;
-                        int scatterIndex = 0;
-                        for (int i = 0; i < piles - 1 && remaining > 1; i++)
+                        var droppedPawn = droppedThing as Pawn ?? carriedPawn;
+                        if (droppedPawn != null)
                         {
-                            int maxForThis = Mathf.Max(1, remaining - (piles - 1 - i));
-                            int amount = Rand.RangeInclusive(1, maxForThis);
-                            if (amount >= remaining) break;
-                            Thing piece = dropped.SplitOff(amount);
-                            remaining -= amount;
+                            // Choose an external body part to bruise
+                            var parts = droppedPawn.health.hediffSet.GetNotMissingParts().Where(p => !p.def.conceptual).ToList();
+                            BodyPartRecord part = parts.FirstOrDefault(p => p.def.defName == "Torso")
+                                ?? parts.FirstOrDefault(p => p.def.defName == "Head")
+                                ?? parts.Where(p => p.depth == BodyPartDepth.Outside).RandomElementWithFallback(null)
+                                ?? parts.RandomElement();
 
-                            // Choose a scatter cell cycling through candidates
-                            IntVec3 target = (scatterCells.Count > 0) ? scatterCells[scatterIndex % scatterCells.Count] : cell;
-                            scatterIndex++;
+                            int dmg = Rand.RangeInclusive(3, Mathf.RoundToInt(Mathf.Lerp(8f, 18f, severity)));
+                            var dinfo = new DamageInfo(DamageDefOf.Blunt, dmg, 0f, -1f, pawn, part);
+                            droppedPawn.TakeDamage(dinfo);
 
-                            // Place piece directly if possible, otherwise near
-                            if (target.Standable(map))
-                                GenPlace.TryPlaceThing(piece, target, map, ThingPlaceMode.Direct);
-                            else
-                                GenPlace.TryPlaceThing(piece, target, map, ThingPlaceMode.Near);
+                            {
+                            var label = "Dropped pawn injured";
+                            var text = $"{droppedPawn.NameShortColored} was dropped by {pawn.NameShortColored} and suffered a blunt injury.";
+                            Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.NegativeEvent, new LookTargets(droppedPawn));
+                            }
 
-                            MaybeDamageThing(piece, pawn, severity);
-                            MaybeTriggerExplosion(piece, pawn, severity);
+                            // Interrupt current job and prevent instant re-pickup
+                            pawn.jobs?.EndCurrentJob(JobCondition.InterruptForced);
                         }
-                        // Damage the main dropped remainder as well
-                        MaybeDamageThing(dropped, pawn, severity);
-                        MaybeTriggerExplosion(dropped, pawn, severity);
+                    }
+                }
+                else
+                {
+                    // Precompute scatter cells around the target cell
+                    var scatterCells = GenRadial.RadialCellsAround(cell, 2, true)
+                        .Where(c => c.InBounds(map))
+                        .Take(12)
+                        .ToList();
 
-                        Messages.Message($"{pawn.NameShortColored} tripped and dropped {dropped.LabelNoCount} in a messy pile!",
-                            new LookTargets(dropped), MessageTypeDefOf.NegativeEvent);
+                    if (pawn.carryTracker.TryDropCarriedThing(cell, ThingPlaceMode.Near, out Thing dropped))
+                    {
+                        if (dropped != null)
+                        {
+                            int total = dropped.stackCount;
+                            int desiredPiles = Mathf.Clamp(Mathf.RoundToInt(Mathf.Lerp(2f, 6f, severity)), 2, 10);
+                            int piles = Mathf.Clamp(desiredPiles, 2, Mathf.Max(2, total));
 
-                        // Interrupt current job so pawn doesn't immediately re-pick the items
-                        pawn.jobs?.EndCurrentJob(JobCondition.InterruptForced);
+                            int remaining = total;
+                            int scatterIndex = 0;
+                            for (int i = 0; i < piles - 1 && remaining > 1; i++)
+                            {
+                                int maxForThis = Mathf.Max(1, remaining - (piles - 1 - i));
+                                int amount = Rand.RangeInclusive(1, maxForThis);
+                                if (amount >= remaining) break;
+                                Thing piece = dropped.SplitOff(amount);
+                                remaining -= amount;
+
+                                IntVec3 target = (scatterCells.Count > 0) ? scatterCells[scatterIndex % scatterCells.Count] : cell;
+                                scatterIndex++;
+
+                                if (target.Standable(map))
+                                    GenPlace.TryPlaceThing(piece, target, map, ThingPlaceMode.Direct);
+                                else
+                                    GenPlace.TryPlaceThing(piece, target, map, ThingPlaceMode.Near);
+
+                                MaybeDamageThing(piece, pawn, severity);
+                                MaybeTriggerExplosion(piece, pawn, severity, ref wickAlertSent);
+                            }
+                            // Damage the main dropped remainder as well
+                            MaybeDamageThing(dropped, pawn, severity);
+                            MaybeTriggerExplosion(dropped, pawn, severity, ref wickAlertSent);
+
+                            Messages.Message($"{pawn.NameShortColored} tripped and dropped {dropped.LabelNoCount} in a messy pile!",
+                                new LookTargets(dropped), MessageTypeDefOf.NegativeEvent);
+
+                            // Interrupt current job so pawn doesn't immediately re-pick the items
+                            pawn.jobs?.EndCurrentJob(JobCondition.InterruptForced);
+                        }
                     }
                 }
             }
@@ -232,7 +264,7 @@ namespace KitchenFires
             thing.TakeDamage(dinfo);
         }
 
-        private static void MaybeTriggerExplosion(Thing thing, Pawn instigator, float severity)
+        private static void MaybeTriggerExplosion(Thing thing, Pawn instigator, float severity, ref bool wickAlertSent)
         {
             if (thing == null || thing.Destroyed) return;
             var comp = thing.TryGetComp<CompExplosive>();
@@ -240,6 +272,20 @@ namespace KitchenFires
             if (Rand.Chance(Mathf.Lerp(0.02f, 0.25f, severity)))
             {
                 comp.StartWick(instigator);
+                if (!wickAlertSent)
+                {
+                    wickAlertSent = true;
+                    string hazardLabel;
+                    var dn = (thing.def?.defName ?? string.Empty).ToLowerInvariant();
+                    if (dn.Contains("chemfuel"))
+                        hazardLabel = "Chemfuel accident";
+                    else if (dn.Contains("shell") || dn.Contains("mortar"))
+                        hazardLabel = "Unstable ordnance";
+                    else
+                        hazardLabel = "Explosive accident";
+                    var text = $"{instigator.NameShortColored} dropped {thing.LabelShort}. Its wick is burning — evacuate immediately!";
+                    Find.LetterStack.ReceiveLetter(hazardLabel, text, LetterDefOf.ThreatBig, new LookTargets(thing));
+                }
             }
         }
 

@@ -3,6 +3,7 @@ using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using Verse.AI;
 
 namespace KitchenFires
 {
@@ -193,34 +194,63 @@ namespace KitchenFires
             Map map = triggeringPawn.Map;
             IntVec3 explosionPos = FindBestIncidentLocation(triggeringPawn);
             
-            // Create small explosion
+            // Schedule a delayed explosion (simulate a short wick)
             float explosionRadius = Rand.Range(1.5f, 2.5f);
-            GenExplosion.DoExplosion(
-                center: explosionPos,
-                map: map,
-                radius: explosionRadius,
-                damType: DamageDefOf.Flame,
-                instigator: triggeringPawn,
-                damAmount: Rand.Range(10, 25),
-                armorPenetration: -1f,
-                explosionSound: null,
-                weapon: null,
-                projectile: null,
-                intendedTarget: null,
-                postExplosionSpawnThingDef: ThingDefOf.Filth_Ash,
-                postExplosionSpawnChance: 0.5f,
-                postExplosionSpawnThingCount: Rand.Range(1, 3),
-                applyDamageToExplosionCellsNeighbors: false,
-                preExplosionSpawnThingDef: null,
-                preExplosionSpawnChance: 0f,
-                preExplosionSpawnThingCount: 0,
-                chanceToStartFire: 0.8f,
-                damageFalloff: true
+            int damage = Rand.Range(10, 25);
+            int delay = Rand.RangeInclusive(120, 240); // 2-4 seconds
+            
+            KitchenExplosionScheduler.Schedule(map, explosionPos, explosionRadius, triggeringPawn, damage, delay);
+            
+            // Notify with a serious letter so the player can react
+            Find.LetterStack.ReceiveLetter(
+                "Kitchen equipment hissing",
+                $"{triggeringPawn.NameShortColored} triggered a dangerous pressure build-up in the kitchen. An explosion is imminent!",
+                LetterDefOf.ThreatBig,
+                new LookTargets(explosionPos, map)
             );
             
-            SendStandardLetter(parms, new LookTargets(explosionPos, map), triggeringPawn.NameShortColored);
+            // Notify with a serious letter so the player can react
+            Find.LetterStack.ReceiveLetter(
+                "Kitchen equipment hissing",
+                $"{triggeringPawn.NameShortColored} triggered a dangerous pressure build-up in the kitchen. An explosion is imminent!",
+                LetterDefOf.ThreatBig,
+                new LookTargets(explosionPos, map)
+            );
             
-            Log.Message($"[KitchenFires] Kitchen explosion created for {triggeringPawn.Name} at {explosionPos}");
+            // Immediately signal danger by igniting ingredient stacks involved in the bill
+            try
+            {
+                var job = triggeringPawn.CurJob;
+                if (job != null && triggeringPawn.jobs?.curDriver is JobDriver_DoBill)
+                {
+                    var ingredientCells = new HashSet<IntVec3>();
+                    if (job.targetQueueB != null)
+                    {
+                        foreach (var t in job.targetQueueB)
+                        {
+                            if (t.HasThing)
+                                ingredientCells.Add(t.Cell);
+                        }
+                    }
+                    if (job.targetB.HasThing)
+                        ingredientCells.Add(job.targetB.Cell);
+                    // Also include workstation cell as a hint point
+                    if (job.targetA.HasThing)
+                        ingredientCells.Add(job.targetA.Cell);
+
+                    float size = Rand.Range(0.25f, 0.5f);
+                    foreach (var c in ingredientCells)
+                    {
+                        FireUtility.TryStartFireIn(c, map, size, triggeringPawn);
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Log.Warning($"[KitchenFires] Failed to light ingredient fires: {ex}");
+            }
+            
+            Log.Message($"[KitchenFires] Kitchen explosion scheduled for {triggeringPawn.Name} at {explosionPos} in {delay} ticks");
             return true;
         }
     }

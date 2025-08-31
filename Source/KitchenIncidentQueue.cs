@@ -52,12 +52,11 @@ namespace KitchenFires
             var queued = new QueuedKitchenIncident(def, parms);
             queuedIncidents.Add(queued);
             
-            Log.Message($"[KitchenFires] Queued kitchen incident: {def.defName}");
+            Log.Message($"[KitchenFires] Queued incident: {def.defName}");
             
-            // Send foreshadowing message
-            string equipmentDesc = GetRandomEquipmentWarning();
-            Messages.Message($"The {equipmentDesc} seems particularly temperamental today...", 
-                MessageTypeDefOf.NeutralEvent);
+            // Send appropriate foreshadowing message based on incident type
+            string foreshadowingMessage = GetForeshadowingMessage(def);
+            Messages.Message(foreshadowingMessage, MessageTypeDefOf.NeutralEvent);
         }
         
         public static bool TryExecuteQueuedIncident(Pawn cookingPawn)
@@ -84,8 +83,8 @@ namespace KitchenFires
             
             if (result)
             {
-                Messages.Message("The kitchen mishap you were worried about has occurred!", 
-                    MessageTypeDefOf.NegativeEvent);
+                string completionMessage = GetCompletionMessage(incident.def);
+                Messages.Message(completionMessage, MessageTypeDefOf.NegativeEvent);
             }
             
             return result;
@@ -98,23 +97,40 @@ namespace KitchenFires
             
             if (queuedIncidents.Count < originalCount)
             {
-                Messages.Message("The kitchen equipment seems to have settled down.", 
+                Messages.Message("The ominous feeling has passed...", 
                     MessageTypeDefOf.NeutralEvent);
             }
         }
         
-        private static string GetRandomEquipmentWarning()
+        private static string GetForeshadowingMessage(IncidentDef def)
         {
-            var warnings = new[]
+            var genericWarnings = new[]
             {
-                "cooking stove",
-                "kitchen equipment", 
-                "cooking fire",
-                "stove burner",
-                "cooking apparatus",
-                "food preparation equipment"
+                "There's an ominous feeling in the air today...",
+                "Something feels off about the colony today...",
+                "The colonists seem unusually accident-prone today...",
+                "There's a sense of impending misfortune...",
+                "An unsettling atmosphere hangs over the settlement...",
+                "The day feels particularly unlucky...",
+                "There's an eerie tension in the colony...",
+                "Something doesn't feel quite right today..."
             };
-            return warnings.RandomElement();
+            return genericWarnings.RandomElement();
+        }
+        
+        private static string GetCompletionMessage(IncidentDef def)
+        {
+            var genericCompletions = new[]
+            {
+                "The misfortune you sensed has come to pass...",
+                "That ominous feeling was justified...",
+                "The colony's bad luck has manifested...",
+                "The sense of impending trouble was accurate...",
+                "The unsettling atmosphere has led to incident...",
+                "That eerie tension has culminated in mishap...",
+                "The day's unlucky feeling has proven true..."
+            };
+            return genericCompletions.RandomElement();
         }
         
         public static void ExposeData()

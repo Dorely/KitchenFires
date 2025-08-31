@@ -265,4 +265,175 @@ namespace KitchenFires
             return bodyParts.Where(p => !p.def.conceptual).RandomElement();
         }
     }
+
+    // Butchering Accident IncidentWorkers
+    public class IncidentWorker_ButcheringCut : IncidentWorker_KitchenBase
+    {
+        protected override bool TryExecuteWorker(IncidentParms parms)
+        {
+            Log.Message($"[KitchenFires] IncidentWorker_ButcheringCut.TryExecuteWorker called - forced: {parms.forced}");
+            
+            if (!parms.forced)
+            {
+                // Storyteller selected this incident - queue it for next butchering action
+                Log.Message("[KitchenFires] Storyteller selected butchering cut - queueing for next butchering action");
+                KitchenIncidentQueue.Add(def, parms);
+                return true;
+            }
+            
+            // Execute the actual incident
+            Pawn triggeringPawn = GetTriggeringPawn(parms);
+            if (triggeringPawn == null) return false;
+            
+            // Create cut injury based on butchering accident logic
+            var targetPart = GetButcheringBodyPart(triggeringPawn, false); // fingers/hands
+            if (targetPart == null) return false;
+            
+            var injury = HediffMaker.MakeHediff(HediffDefOf.Cut, triggeringPawn, targetPart);
+            injury.Severity = Rand.Range(0.1f, 0.4f);
+            triggeringPawn.health.AddHediff(injury);
+            
+            SendStandardLetter(parms, new LookTargets(triggeringPawn), triggeringPawn.NameShortColored);
+            
+            Log.Message($"[KitchenFires] Butchering cut created for {triggeringPawn.Name} on {targetPart.Label}");
+            return true;
+        }
+        
+        private BodyPartRecord GetButcheringBodyPart(Pawn pawn, bool preferHand)
+        {
+            var bodyParts = pawn.health.hediffSet.GetNotMissingParts().ToList();
+            
+            if (preferHand)
+            {
+                var hands = bodyParts.Where(p => p.def.defName.ToLowerInvariant().Contains("hand")).ToList();
+                if (hands.Any()) return hands.RandomElement();
+            }
+            
+            var fingers = bodyParts.Where(p => p.def.defName.ToLowerInvariant().Contains("finger")).ToList();
+            if (fingers.Any()) return fingers.RandomElement();
+            
+            var hands2 = bodyParts.Where(p => p.def.defName.ToLowerInvariant().Contains("hand")).ToList();
+            if (hands2.Any()) return hands2.RandomElement();
+            
+            return null;
+        }
+    }
+
+    public class IncidentWorker_ButcheringAmputation : IncidentWorker_KitchenBase
+    {
+        protected override bool TryExecuteWorker(IncidentParms parms)
+        {
+            Log.Message($"[KitchenFires] IncidentWorker_ButcheringAmputation.TryExecuteWorker called - forced: {parms.forced}");
+            
+            if (!parms.forced)
+            {
+                // Storyteller selected this incident - queue it for next butchering action
+                Log.Message("[KitchenFires] Storyteller selected butchering amputation - queueing for next butchering action");
+                KitchenIncidentQueue.Add(def, parms);
+                return true;
+            }
+            
+            // Execute the actual incident
+            Pawn triggeringPawn = GetTriggeringPawn(parms);
+            if (triggeringPawn == null) return false;
+            
+            // Create amputation injury - more severe
+            var targetPart = GetButcheringBodyPart(triggeringPawn, Rand.Bool); // random hand vs finger
+            if (targetPart == null) return false;
+            
+            var injury = HediffMaker.MakeHediff(HediffDefOf.MissingBodyPart, triggeringPawn, targetPart);
+            injury.Severity = Rand.Range(0.3f, 0.8f);
+            triggeringPawn.health.AddHediff(injury);
+            
+            SendStandardLetter(parms, new LookTargets(triggeringPawn), triggeringPawn.NameShortColored);
+            
+            Log.Message($"[KitchenFires] Butchering amputation created for {triggeringPawn.Name} on {targetPart.Label}");
+            return true;
+        }
+        
+        private BodyPartRecord GetButcheringBodyPart(Pawn pawn, bool preferHand)
+        {
+            var bodyParts = pawn.health.hediffSet.GetNotMissingParts().ToList();
+            
+            if (preferHand)
+            {
+                var hands = bodyParts.Where(p => p.def.defName.ToLowerInvariant().Contains("hand")).ToList();
+                if (hands.Any()) return hands.RandomElement();
+            }
+            
+            var fingers = bodyParts.Where(p => p.def.defName.ToLowerInvariant().Contains("finger")).ToList();
+            if (fingers.Any()) return fingers.RandomElement();
+            
+            var hands2 = bodyParts.Where(p => p.def.defName.ToLowerInvariant().Contains("hand")).ToList();
+            if (hands2.Any()) return hands2.RandomElement();
+            
+            return null;
+        }
+    }
+
+    // Ankle Sprain IncidentWorker
+    public class IncidentWorker_AnkleSprain : IncidentWorker_KitchenBase
+    {
+        protected override bool TryExecuteWorker(IncidentParms parms)
+        {
+            Log.Message($"[KitchenFires] IncidentWorker_AnkleSprain.TryExecuteWorker called - forced: {parms.forced}");
+            
+            if (!parms.forced)
+            {
+                // Storyteller selected this incident - queue it for next movement over obstacles
+                Log.Message("[KitchenFires] Storyteller selected ankle sprain - queueing for next obstacle climb");
+                KitchenIncidentQueue.Add(def, parms);
+                return true;
+            }
+            
+            // Execute the actual incident
+            Pawn triggeringPawn = GetTriggeringPawn(parms);
+            if (triggeringPawn == null) return false;
+            
+            // Create ankle sprain injury
+            var targetPart = GetAnkleBodyPart(triggeringPawn);
+            if (targetPart == null) 
+            {
+                // Fallback to leg
+                targetPart = GetLegBodyPart(triggeringPawn);
+                if (targetPart == null) return false;
+            }
+            
+            // Try to use custom AnkleSprain hediff, fallback to bruise
+            var sprain = HediffMaker.MakeHediff(DefDatabase<HediffDef>.GetNamed("AnkleSprain", false), triggeringPawn, targetPart);
+            if (sprain == null)
+            {
+                sprain = HediffMaker.MakeHediff(DefDatabase<HediffDef>.GetNamed("Bruise", false), triggeringPawn, targetPart);
+                if (sprain == null) return false;
+            }
+            
+            sprain.Severity = Rand.Range(0.15f, 0.6f);
+            triggeringPawn.health.AddHediff(sprain);
+            
+            SendStandardLetter(parms, new LookTargets(triggeringPawn), triggeringPawn.NameShortColored);
+            
+            Log.Message($"[KitchenFires] Ankle sprain created for {triggeringPawn.Name} on {targetPart.Label}");
+            return true;
+        }
+        
+        private BodyPartRecord GetAnkleBodyPart(Pawn pawn)
+        {
+            var bodyParts = pawn.health.hediffSet.GetNotMissingParts().ToList();
+            
+            var ankles = bodyParts.Where(p => p.def.defName.ToLower().Contains("ankle")).ToList();
+            if (ankles.Any()) return ankles.RandomElement();
+            
+            var feet = bodyParts.Where(p => p.def.defName.ToLower().Contains("foot")).ToList();
+            if (feet.Any()) return feet.RandomElement();
+            
+            return null;
+        }
+        
+        private BodyPartRecord GetLegBodyPart(Pawn pawn)
+        {
+            var bodyParts = pawn.health.hediffSet.GetNotMissingParts().ToList();
+            var legs = bodyParts.Where(p => p.def.defName.ToLower().Contains("leg")).ToList();
+            return legs.Any() ? legs.RandomElement() : null;
+        }
+    }
 }

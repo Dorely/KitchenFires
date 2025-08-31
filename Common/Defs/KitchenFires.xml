@@ -126,4 +126,51 @@
     <letterDef>NegativeEvent</letterDef>
   </IncidentDef>
 
+  <!-- Butchering Accident Definitions -->
+  <IncidentDef>
+    <defName>ButcheringAccident_Cut</defName>
+    <label>butchering cut</label>
+    <category>ThreatSmall</category>
+    <targetTags>
+      <li>Map_PlayerHome</li>
+    </targetTags>
+    <workerClass>KitchenFires.IncidentWorker_ButcheringCut</workerClass>
+    <baseChance>1.8</baseChance>
+    <minRefireDays>1</minRefireDays>
+    <letterText>{0} has suffered a cut while butchering! Sharp knives and slippery meat have caused a painful wound.</letterText>
+    <letterLabel>Butchering accident</letterLabel>
+    <letterDef>NegativeEvent</letterDef>
+  </IncidentDef>
+
+  <IncidentDef>
+    <defName>ButcheringAccident_Amputation</defName>
+    <label>butchering amputation</label>
+    <category>ThreatSmall</category>
+    <targetTags>
+      <li>Map_PlayerHome</li>
+    </targetTags>
+    <workerClass>KitchenFires.IncidentWorker_ButcheringAmputation</workerClass>
+    <baseChance>0.4</baseChance>
+    <minRefireDays>5</minRefireDays>
+    <letterText>{0} has suffered a severe amputation while butchering! A mishap with butchering tools has caused a traumatic injury.</letterText>
+    <letterLabel>Severe butchering accident</letterLabel>
+    <letterDef>ThreatSmall</letterDef>
+  </IncidentDef>
+
+  <!-- Ankle Sprain Accident Definitions -->
+  <IncidentDef>
+    <defName>AnkleSprainAccident</defName>
+    <label>sprained ankle</label>
+    <category>ThreatSmall</category>
+    <targetTags>
+      <li>Map_PlayerHome</li>
+    </targetTags>
+    <workerClass>KitchenFires.IncidentWorker_AnkleSprain</workerClass>
+    <baseChance>1.2</baseChance>
+    <minRefireDays>0.5</minRefireDays>
+    <letterText>{0} has sprained their ankle while climbing over obstacles! Uneven terrain and climbable objects have caused a mobility injury.</letterText>
+    <letterLabel>Movement accident</letterLabel>
+    <letterDef>NegativeEvent</letterDef>
+  </IncidentDef>
+
 </Defs>

@@ -93,5 +93,97 @@ namespace KitchenFires
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             method?.Invoke(null, new object[] { pawn, riskAssessment });
         }
+        
+        // Butchering Accident Debug Actions
+        [DebugAction("Kitchen Fires", "Queue butchering cut", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void QueueButcheringCut()
+        {
+            Map map = Find.CurrentMap;
+            if (map == null) return;
+            
+            var incidentDef = DefDatabase<IncidentDef>.GetNamed("ButcheringAccident_Cut");
+            var parms = new IncidentParms();
+            parms.target = map;
+            KitchenIncidentQueue.Add(incidentDef, parms);
+            Messages.Message("Butchering cut queued - start butchering to trigger it!", MessageTypeDefOf.NeutralEvent);
+        }
+        
+        [DebugAction("Kitchen Fires", "Queue butchering amputation", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void QueueButcheringAmputation()
+        {
+            Map map = Find.CurrentMap;
+            if (map == null) return;
+            
+            var incidentDef = DefDatabase<IncidentDef>.GetNamed("ButcheringAccident_Amputation");
+            var parms = new IncidentParms();
+            parms.target = map;
+            KitchenIncidentQueue.Add(incidentDef, parms);
+            Messages.Message("Butchering amputation queued - start butchering to trigger it!", MessageTypeDefOf.NeutralEvent);
+        }
+        
+        // Ankle Sprain Debug Actions
+        [DebugAction("Kitchen Fires", "Queue ankle sprain", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void QueueAnkleSprain()
+        {
+            Map map = Find.CurrentMap;
+            if (map == null) return;
+            
+            var incidentDef = DefDatabase<IncidentDef>.GetNamed("AnkleSprainAccident");
+            var parms = new IncidentParms();
+            parms.target = map;
+            KitchenIncidentQueue.Add(incidentDef, parms);
+            Messages.Message("Ankle sprain queued - walk over obstacles to trigger it!", MessageTypeDefOf.NeutralEvent);
+        }
+        
+        // Immediate testing for new accidents
+        [DebugAction("Kitchen Fires", "Test immediate butchering accident (select pawn first)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void TestImmediateButcheringAccident()
+        {
+            Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
+            if (pawn == null || !pawn.IsColonist) 
+            {
+                Messages.Message("Please select a colonist first!", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            
+            Messages.Message($"Testing immediate butchering accident for {pawn.Name}", MessageTypeDefOf.NeutralEvent);
+            
+            // Force trigger butchering accident
+            var riskAssessment = new ButcheringRiskAssessment
+            {
+                AccidentRisk = 1.0f, // 100% chance for testing
+                AccidentSeverity = 0.5f
+            };
+            
+            // Use reflection to call the private method for testing
+            var method = typeof(ButcheringAccidentUtility).GetMethod("TriggerImmediateButcheringAccident", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            method?.Invoke(null, new object[] { pawn, riskAssessment });
+        }
+        
+        [DebugAction("Kitchen Fires", "Test immediate ankle sprain (select pawn first)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void TestImmediateAnkleSprain()
+        {
+            Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
+            if (pawn == null || !pawn.IsColonist) 
+            {
+                Messages.Message("Please select a colonist first!", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            
+            Messages.Message($"Testing immediate ankle sprain for {pawn.Name}", MessageTypeDefOf.NeutralEvent);
+            
+            // Force trigger ankle sprain
+            var riskAssessment = new AnkleRiskAssessment
+            {
+                SprainRisk = 1.0f, // 100% chance for testing
+                SprainSeverity = 0.4f
+            };
+            
+            // Use reflection to call the private method for testing
+            var method = typeof(AnkleSprainIncidentUtility).GetMethod("TriggerImmediateAnkleSprain", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            method?.Invoke(null, new object[] { pawn, riskAssessment });
+        }
     }
 }

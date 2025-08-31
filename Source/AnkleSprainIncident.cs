@@ -33,15 +33,22 @@ namespace KitchenFires
                 return;
             }
 
+            // First priority: Check for queued storyteller incidents
+            if (KitchenIncidentQueue.TryExecuteQueuedIncident(pawn))
+            {
+                return; // Queued incident was executed
+            }
+
             var riskAssessment = CalculateSprainRisks(pawn, things);
             
-            // Debug logging
-            //Log.Message($"[KitchenFires] Ankle sprain risk check for {pawn.Name}: Risk={riskAssessment.SprainRisk:P}");
+            // Reduced chance for immediate incidents (30% of original rate)
+            // This maintains some spontaneity while letting storyteller drive most incidents
+            float reducedRisk = riskAssessment.SprainRisk * 0.3f;
 
-            if (Rand.Chance(riskAssessment.SprainRisk))
+            if (Rand.Chance(reducedRisk))
             {
-                //Log.Message($"[KitchenFires] Ankle sprain triggered for {pawn.Name}!");
-                TriggerAnkleSprain(pawn, riskAssessment.SprainSeverity);
+                Log.Message($"[KitchenFires] Immediate ankle sprain triggered for {pawn.Name}!");
+                TriggerImmediateAnkleSprain(pawn, riskAssessment);
             }
         }
 
@@ -172,6 +179,23 @@ namespace KitchenFires
             }
 
             return Mathf.Clamp(baseSeverity, 0.1f, 0.6f);
+        }
+
+        private static void TriggerImmediateAnkleSprain(Pawn pawn, AnkleRiskAssessment riskAssessment)
+        {
+            // Only one type of ankle sprain incident
+            var incidentDef = DefDatabase<IncidentDef>.GetNamed("AnkleSprainAccident");
+            
+            // Create incident parameters
+            var parms = new IncidentParms();
+            parms.target = pawn.Map;
+            parms.forced = true; // Mark as immediate execution
+            
+            // Store triggering pawn info
+            parms.customLetterText = $"triggeringPawn:{pawn.thingIDNumber}";
+            
+            // Execute through IncidentWorker for proper storyteller integration
+            incidentDef.Worker.TryExecute(parms);
         }
 
         private static void TriggerAnkleSprain(Pawn pawn, float severity)

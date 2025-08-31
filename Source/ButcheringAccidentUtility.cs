@@ -18,15 +18,22 @@ namespace KitchenFires
             // Only trigger on butchering recipes
             if (!IsButcheringRecipe(recipe)) return;
 
+            // First priority: Check for queued storyteller incidents
+            if (KitchenIncidentQueue.TryExecuteQueuedIncident(pawn))
+            {
+                return; // Queued incident was executed
+            }
+
             var riskAssessment = CalculateAccidentRisk(pawn, recipe);
 
-            // Debug logging
-            Log.Message($"[KitchenFires] Butchering accident risk check for {pawn.Name}: Risk={riskAssessment.AccidentRisk:P}");
+            // Reduced chance for immediate incidents (30% of original rate)
+            // This maintains some spontaneity while letting storyteller drive most incidents
+            float reducedRisk = riskAssessment.AccidentRisk * 0.3f;
 
-            if (Rand.Chance(riskAssessment.AccidentRisk))
+            if (Rand.Chance(reducedRisk))
             {
-                Log.Message($"[KitchenFires] Butchering accident triggered for {pawn.Name}!");
-                TriggerButcheringAccident(pawn, riskAssessment.AccidentSeverity);
+                Log.Message($"[KitchenFires] Immediate butchering accident triggered for {pawn.Name}!");
+                TriggerImmediateButcheringAccident(pawn, riskAssessment);
             }
         }
 
@@ -153,6 +160,35 @@ namespace KitchenFires
             severity *= (1.0f + riskMultiplier * 0.1f);
             
             return Mathf.Clamp(severity, 0.05f, 0.8f);
+        }
+
+        private static void TriggerImmediateButcheringAccident(Pawn pawn, ButcheringRiskAssessment riskAssessment)
+        {
+            // Select incident type based on severity roll
+            float severityRoll = Rand.Value;
+            IncidentDef incidentDef;
+            
+            if (severityRoll >= 0.75f)
+            {
+                // 25% chance: Amputation (severe)
+                incidentDef = DefDatabase<IncidentDef>.GetNamed("ButcheringAccident_Amputation");
+            }
+            else
+            {
+                // 75% chance: Cut (minor)
+                incidentDef = DefDatabase<IncidentDef>.GetNamed("ButcheringAccident_Cut");
+            }
+            
+            // Create incident parameters
+            var parms = new IncidentParms();
+            parms.target = pawn.Map;
+            parms.forced = true; // Mark as immediate execution
+            
+            // Store triggering pawn info
+            parms.customLetterText = $"triggeringPawn:{pawn.thingIDNumber}";
+            
+            // Execute through IncidentWorker for proper storyteller integration
+            incidentDef.Worker.TryExecute(parms);
         }
 
         private static void TriggerButcheringAccident(Pawn pawn, float severity)

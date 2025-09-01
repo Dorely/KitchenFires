@@ -66,6 +66,19 @@ namespace KitchenFires
             Messages.Message(info, MessageTypeDefOf.NeutralEvent);
             Log.Message($"[KitchenFires Debug] {info}");
         }
+
+        [DebugAction("Kitchen Fires", "Queue choking", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void QueueChoking()
+        {
+            Map map = Find.CurrentMap;
+            if (map == null) return;
+            
+            var incidentDef = DefDatabase<IncidentDef>.GetNamed("EatingAccident_Choking");
+            var parms = new IncidentParms();
+            parms.target = map;
+            KitchenIncidentQueue.Add(incidentDef, parms);
+            Messages.Message("Choking queued - start eating to trigger it!", MessageTypeDefOf.NeutralEvent);
+        }
         
         [DebugAction("Kitchen Fires", "Test immediate incident (select pawn first)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
         public static void TestImmediateIncident()
@@ -92,6 +105,20 @@ namespace KitchenFires
             var method = typeof(KitchenIncidentUtility).GetMethod("TriggerImmediateKitchenIncident", 
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             method?.Invoke(null, new object[] { pawn, riskAssessment });
+        }
+
+        [DebugAction("Kitchen Fires", "Test immediate choking (select pawn first)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void TestImmediateChoking()
+        {
+            Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
+            if (pawn == null || !pawn.IsColonist) 
+            {
+                Messages.Message("Please select a colonist first!", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            
+            Messages.Message($"Testing immediate choking for {pawn.Name}", MessageTypeDefOf.NeutralEvent);
+            EatingAccidentUtility.TriggerImmediateChoking(pawn);
         }
         
         // Butchering Accident Debug Actions

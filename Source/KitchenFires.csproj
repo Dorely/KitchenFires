@@ -69,9 +69,11 @@
     <Compile Include="KitchenExplosionScheduler.cs" />
     <Compile Include="KitchenFiresGameComponent.cs" />
     <Compile Include="KitchenFiresDebug.cs" />
+    <Compile Include="Hediff_ChokingCritical.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EatingAccidents.cs" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

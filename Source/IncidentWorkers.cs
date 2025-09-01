@@ -3,6 +3,7 @@ using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using Hediff_MissingPart = Verse.Hediff_MissingPart;
 using Verse.AI;
 
 namespace KitchenFires
@@ -392,9 +393,11 @@ namespace KitchenFires
             var targetPart = GetButcheringBodyPart(triggeringPawn, Rand.Bool); // random hand vs finger
             if (targetPart == null) return false;
             
-            var injury = HediffMaker.MakeHediff(HediffDefOf.MissingBodyPart, triggeringPawn, targetPart);
-            injury.Severity = Rand.Range(0.3f, 0.8f);
-            triggeringPawn.health.AddHediff(injury);
+            var missing = (Hediff_MissingPart)HediffMaker.MakeHediff(HediffDefOf.MissingBodyPart, triggeringPawn, targetPart);
+            // Mark as a fresh, bleeding removal caused by a cut so it needs tending
+            missing.lastInjury = HediffDefOf.Cut;
+            missing.IsFresh = true;
+            triggeringPawn.health.AddHediff(missing, targetPart);
             
             SendStandardLetter(parms, new LookTargets(triggeringPawn), triggeringPawn.NameShortColored);
             
@@ -419,6 +422,40 @@ namespace KitchenFires
             if (hands2.Any()) return hands2.RandomElement();
             
             return null;
+        }
+    }
+
+    public class IncidentWorker_EatingChoking : IncidentWorker
+    {
+        protected override bool TryExecuteWorker(IncidentParms parms)
+        {
+            Log.Message($"[KitchenFires] IncidentWorker_EatingChoking.TryExecuteWorker called - forced: {parms.forced}");
+
+            if (!parms.forced)
+            {
+                // Queue for next eating action
+                KitchenIncidentQueue.Add(def, parms);
+                return true;
+            }
+
+            Map map = (Map)parms.target;
+            Pawn triggeringPawn = null;
+            if (!string.IsNullOrEmpty(parms.customLetterText) && parms.customLetterText.StartsWith("triggeringPawn:"))
+            {
+                string idString = parms.customLetterText.Substring("triggeringPawn:".Length);
+                if (int.TryParse(idString, out int pawnId))
+                {
+                    triggeringPawn = map.mapPawns.FreeColonistsSpawned.FirstOrDefault(p => p.thingIDNumber == pawnId);
+                    parms.customLetterText = string.Empty;
+                }
+            }
+            if (triggeringPawn == null)
+            {
+                triggeringPawn = map.mapPawns.FreeColonistsSpawned.RandomElementWithFallback();
+            }
+            if (triggeringPawn == null) return false;// Trigger immediate choking with randomized severity
+            EatingAccidentUtility.TriggerImmediateChoking(triggeringPawn);
+            return true;
         }
     }
 

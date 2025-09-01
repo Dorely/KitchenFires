@@ -47,7 +47,8 @@ namespace KitchenFires
         {
             Cooking,
             Butchering,
-            Movement
+            Movement,
+            Eating
         }
 
         private static List<QueuedKitchenIncident> queuedIncidents = new List<QueuedKitchenIncident>();
@@ -113,6 +114,8 @@ namespace KitchenFires
                     return name.StartsWith("ButcheringAccident_");
                 case QueuedIncidentContext.Movement:
                     return name == "TrippingAccident";
+                case QueuedIncidentContext.Eating:
+                    return name.StartsWith("EatingAccident_") || name == "EatingAccident_Choking";
                 default:
                     return false;
             }

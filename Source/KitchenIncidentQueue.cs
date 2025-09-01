@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using Verse.AI;
 
 namespace KitchenFires
 {
@@ -52,10 +54,79 @@ namespace KitchenFires
         }
 
         private static List<QueuedKitchenIncident> queuedIncidents = new List<QueuedKitchenIncident>();
-        
         public static int Count => queuedIncidents.Count;
-        
-        public static void Add(IncidentDef def, IncidentParms parms)
+
+        private class JobProgress
+        {
+            public string lastJobKey;
+            public int startTick;
+            public Job lastJob;
+        }
+
+        private static readonly Dictionary<int, JobProgress> _jobProgressByPawn = new Dictionary<int, JobProgress>();
+
+        // Minimum ticks a job should run before queued incidents can fire
+        private const int PARTIAL_TICKS_COOKING = 300;     
+        private const int PARTIAL_TICKS_BUTCHERING = 300;  
+        private const int PARTIAL_TICKS_EATING = 300;      
+
+        private static bool HasSufficientProgress(Pawn pawn, QueuedIncidentContext context)
+        {
+            if (pawn == null) return false;
+            var job = pawn.CurJob;
+            var jobDefName = job?.def?.defName ?? string.Empty;
+
+            // Determine relevant job key per context
+            string expectedKey = null;
+            int requiredTicks = 0;
+            switch (context)
+            {
+                case QueuedIncidentContext.Cooking:
+                case QueuedIncidentContext.Butchering:
+                    // Cooking/Butchering both run through DoBill
+                    if (!jobDefName.Contains("DoBill")) return false;
+                    expectedKey = "DoBill";
+                    requiredTicks = (context == QueuedIncidentContext.Cooking) ? PARTIAL_TICKS_COOKING : PARTIAL_TICKS_BUTCHERING;
+                    break;
+                case QueuedIncidentContext.Eating:
+                    if (!jobDefName.Contains("Ingest")) return false;
+                    expectedKey = "Ingest";
+                    requiredTicks = PARTIAL_TICKS_EATING;
+                    break;
+                case QueuedIncidentContext.Movement:
+                    // Movement happens frequently; don’t gate to avoid missing window
+                    return true;
+            }
+
+            int now = Find.TickManager.TicksGame;
+            int id = pawn.thingIDNumber;
+            if (!_jobProgressByPawn.TryGetValue(id, out var prog))
+            {
+                prog = new JobProgress { lastJobKey = expectedKey, startTick = now, lastJob = job };
+                _jobProgressByPawn[id] = prog;
+                return false; // just started tracking
+            }
+
+            // Reset if job object changed (even if same def)
+            if (!ReferenceEquals(prog.lastJob, job))
+            {
+                prog.lastJob = job;
+                prog.lastJobKey = expectedKey;
+                prog.startTick = now;
+                return false;
+            }
+
+            // Reset if job key changed
+            if (prog.lastJobKey != expectedKey)
+            {
+                prog.lastJobKey = expectedKey;
+                prog.startTick = now;
+                return false;
+            }
+
+            return (now - prog.startTick) >= requiredTicks;
+        }
+public static void Add(IncidentDef def, IncidentParms parms)
         {
             var queued = new QueuedKitchenIncident(def, parms);
             queuedIncidents.Add(queued);
@@ -77,6 +148,19 @@ namespace KitchenFires
             int index = queuedIncidents.FindIndex(qi => IsIncidentAllowedInContext(qi.def, context));
             if (index < 0)
                 return false;
+
+            // Ensure sufficient in-job progress before firing the queued incident
+            if (!HasSufficientProgress(pawn, context))
+            {
+                // Not enough progress yet; keep it queued for a later tick
+                return false;
+            }
+            // Reset gating so subsequent incidents wait again
+            if (_jobProgressByPawn.TryGetValue(pawn.thingIDNumber, out var prog))
+            {
+                prog.startTick = Find.TickManager.TicksGame;
+                prog.lastJob = pawn.CurJob;
+            }
 
             var incident = queuedIncidents[index];
             queuedIncidents.RemoveAt(index);
@@ -183,4 +267,5 @@ namespace KitchenFires
                    string.Join("\n", queuedIncidents.Select(qi => "- " + qi.ToString()));
         }
     }
+
 }

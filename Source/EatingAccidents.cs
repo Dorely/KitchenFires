@@ -182,15 +182,18 @@ namespace KitchenFires
             {
                 var toil = __result;
                 var original = toil.tickIntervalAction;
-                bool triggered = false;
+                bool randomChecked = false;
                 toil.tickIntervalAction = delta =>
                 {
                     original?.Invoke(delta);
-                    if (!triggered)
+                    try
                     {
-                        triggered = true;
-                        try
+                        // Always try to execute queued eating incidents; internal gating handles partial progress
+                        KitchenIncidentQueue.TryExecuteQueuedIncident(chewer, KitchenIncidentQueue.QueuedIncidentContext.Eating);
+
+                        if (!randomChecked)
                         {
+                            randomChecked = true;
                             var thing = toil.actor?.CurJob?.GetTarget(TargetIndex.A).Thing;
                             // Try spill first; if it happens, skip choking
                             if (!EatingAccidentUtility.MaybeTriggerSpill(chewer, thing))
@@ -198,10 +201,10 @@ namespace KitchenFires
                                 EatingAccidentUtility.MaybeTriggerChoking(chewer, thing);
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            Log.Warning($"[KitchenFires] Error during eating accident check: {ex}");
-                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning($"[KitchenFires] Error during eating accident check: {ex}");
                     }
                 };
             }

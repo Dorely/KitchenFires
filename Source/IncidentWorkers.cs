@@ -344,6 +344,8 @@ namespace KitchenFires
             var injury = HediffMaker.MakeHediff(HediffDefOf.Cut, triggeringPawn, targetPart);
             injury.Severity = Rand.Range(0.1f, 0.4f);
             triggeringPawn.health.AddHediff(injury);
+            triggeringPawn.jobs?.EndCurrentJob(JobCondition.InterruptForced);
+            triggeringPawn.stances?.stagger?.StaggerFor(Rand.RangeInclusive(60, 120));
             
             SendStandardLetter(parms, new LookTargets(triggeringPawn), triggeringPawn.NameShortColored);
             
@@ -379,7 +381,7 @@ namespace KitchenFires
             
             if (!parms.forced)
             {
-                // Storyteller selected this incident - queue it for next butchering action
+                // Storyteller selected this incident - queueing for next butchering action
                 Log.Message("[KitchenFires] Storyteller selected butchering amputation - queueing for next butchering action");
                 KitchenIncidentQueue.Add(def, parms);
                 return true;
@@ -398,6 +400,8 @@ namespace KitchenFires
             missing.lastInjury = HediffDefOf.Cut;
             missing.IsFresh = true;
             triggeringPawn.health.AddHediff(missing, targetPart);
+            triggeringPawn.jobs?.EndCurrentJob(JobCondition.InterruptForced);
+            triggeringPawn.stances?.stagger?.StaggerFor(Rand.RangeInclusive(60, 120));
             
             SendStandardLetter(parms, new LookTargets(triggeringPawn), triggeringPawn.NameShortColored);
             

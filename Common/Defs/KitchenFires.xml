@@ -289,4 +289,20 @@
     <letterDef>NegativeEvent</letterDef>
   </IncidentDef>
 
+  <!-- Eating Accident Thoughts -->
+  <ThoughtDef>
+    <defName>SpilledFood</defName>
+    <label>spilled food</label>
+    <durationDays>0.2</durationDays>
+    <stackLimit>1</stackLimit>
+    <thoughtClass>Thought_Memory</thoughtClass>
+    <stages>
+      <li>
+        <label>spilled food</label>
+        <description>Spilled their meal and made a mess.</description>
+        <baseMoodEffect>-3</baseMoodEffect>
+      </li>
+    </stages>
+  </ThoughtDef>
+
 </Defs>

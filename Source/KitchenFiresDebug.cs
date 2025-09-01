@@ -67,6 +67,23 @@ namespace KitchenFires
             Log.Message($"[KitchenFires Debug] {info}");
         }
 
+        [DebugAction("Kitchen Fires", "Force food spill (select pawn)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void ForceFoodSpill()
+        {
+            Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
+            if (pawn == null || !pawn.IsColonist)
+            {
+                Messages.Message("Please select a colonist first!", MessageTypeDefOf.RejectInput);
+                return;
+            }
+
+            bool ok = EatingAccidentUtility.TriggerImmediateSpill(pawn);
+            if (!ok)
+            {
+                Messages.Message($"No ingestible found to spill for {pawn.NameShortColored}.", MessageTypeDefOf.RejectInput);
+            }
+        }
+
         [DebugAction("Kitchen Fires", "Queue choking", allowedGameStates = AllowedGameStates.PlayingOnMap)]
         public static void QueueChoking()
         {

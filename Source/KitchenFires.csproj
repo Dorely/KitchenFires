@@ -99,7 +99,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(ProjectDir)..\Common\Assemblies\KitchenFires.dll" "$(ProjectDir)..\1.6\Assemblies\" /S /C /Y /K /I /Q /D
+    <PostBuildEvent>"$(ProjectDir)DefsValidator\bin\$(Configuration)\DefsValidator.exe"
+if errorlevel 1 exit /b 1
+xcopy "$(ProjectDir)..\Common\Assemblies\KitchenFires.dll" "$(ProjectDir)..\1.6\Assemblies\" /S /C /Y /K /I /Q /D
 xcopy "$(ProjectDir)..\Common\" "C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\KitchenFires_Release\Common\" /S /C /Y /K /I /Q /D
 xcopy "$(ProjectDir)..\1.6\" "C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\KitchenFires_Release\1.6\" /S /C /Y /K /I /Q /D
 xcopy "$(ProjectDir)..\About\" "C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\KitchenFires_Release\About\" /S /C /Y /K /I /Q /D

@@ -303,6 +303,21 @@
         <baseMoodEffect>-3</baseMoodEffect>
       </li>
     </stages>
-  </ThoughtDef>
+  </ThoughtDef>  
+  <!-- Work Accident Incident -->
+  <IncidentDef>
+    <defName>WorkAccident</defName>
+    <label>work accident</label>
+    <category>ThreatSmall</category>
+    <targetTags>
+      <li>Map_PlayerHome</li>
+    </targetTags>
+    <workerClass>KitchenFires.IncidentWorker_WorkAccident</workerClass>
+    <baseChance>1.2</baseChance>
+    <minRefireDays>1.5</minRefireDays>
+    <letterText>{0} suffered a work accident while performing manual labor. Be cautious around mining, chopping, planting, and harvesting tasks.</letterText>
+    <letterLabel>Work accident</letterLabel>
+    <letterDef>NegativeEvent</letterDef>
+  </IncidentDef>
 
 </Defs>

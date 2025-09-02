@@ -63,8 +63,8 @@
     <Compile Include="KitchenFires.cs" />
     <Compile Include="KitchenIncident.cs" />
     <Compile Include="TrippingAccident.cs" />
-    <Compile Include="ButcheringAccidentUtility.cs" />
-    <Compile Include="KitchenIncidentQueue.cs" />
+    <Compile Include="ButcheringAccidentUtility.cs" />    <Compile Include="KitchenIncidentQueue.cs" />
+<Compile Include="WorkAccidents.cs" />
     <Compile Include="IncidentWorkers.cs" />
     <Compile Include="KitchenExplosionScheduler.cs" />
     <Compile Include="KitchenFiresGameComponent.cs" />

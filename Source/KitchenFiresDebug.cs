@@ -83,6 +83,35 @@ namespace KitchenFires
                 Messages.Message($"No ingestible found to spill for {pawn.NameShortColored}.", MessageTypeDefOf.RejectInput);
             }
         }
+        [DebugAction("Kitchen Fires", "Queue work accident", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void QueueWorkAccident()
+        {
+            Map map = Find.CurrentMap;
+            if (map == null) return;
+
+            var incidentDef = DefDatabase<IncidentDef>.GetNamed("WorkAccident", false);
+            if (incidentDef == null)
+            {
+                Messages.Message("WorkAccident def not found.", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            var parms = new IncidentParms { target = map };
+            KitchenIncidentQueue.Add(incidentDef, parms);
+            Messages.Message("Work accident queued - perform mining/chopping/planting/harvesting to trigger it!", MessageTypeDefOf.NeutralEvent);
+        }
+
+        [DebugAction("Kitchen Fires", "Test immediate work accident (select pawn first)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void TestImmediateWorkAccident()
+        {
+            Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
+            if (pawn == null || !pawn.IsColonist)
+            {
+                Messages.Message("Please select a colonist first!", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            Messages.Message($"Testing immediate work accident for {pawn.Name}", MessageTypeDefOf.NeutralEvent);
+            WorkAccidentUtility.TriggerImmediateWorkAccident(pawn);
+        }
 
         [DebugAction("Kitchen Fires", "Queue choking", allowedGameStates = AllowedGameStates.PlayingOnMap)]
         public static void QueueChoking()

@@ -27,7 +27,6 @@ namespace KitchenFires
         }
     }
 
-
     // Harmony Patch - Patch the actual recipe work method that runs during cooking
     [HarmonyPatch(typeof(Toils_Recipe), "DoRecipeWork")]
     static class Toils_Recipe_Patch
@@ -36,37 +35,25 @@ namespace KitchenFires
         {
             try
             {
-                // Store references to avoid ref parameter issues
                 var toil = __result;
                 var originalTickInterval = toil.tickIntervalAction;
-                
-                // Replace with our enhanced version
                 toil.tickIntervalAction = delegate(int delta)
                 {
                     try
                     {
-                        // Call the original tick interval action first
                         originalTickInterval?.Invoke(delta);
-                        
-                        // Our incident check logic
                         Pawn actor = toil.actor;
                         if (actor != null && actor.IsColonist && actor.jobs.curDriver is JobDriver_DoBill doBillDriver)
                         {
-                            //Log.Message($"[KitchenFires] Recipe work tick for {actor.Name}");
-                            
                             var bill = doBillDriver.job?.bill;
                             if (bill?.recipe != null)
                             {
-                                // Prioritize butchering over cooking - butchering is more specific
                                 if (ButcheringAccidentUtility.IsButcheringRecipe(bill.recipe))
                                 {
-                                    //Log.Message($"[KitchenFires] Butchering recipe work: {bill.recipe.defName} for {actor.Name}");
                                     ButcheringAccidentUtility.CheckForButcheringAccident(actor, bill.recipe);
                                 }
-                                // Only check for cooking if it's NOT a butchering recipe
                                 else if (KitchenIncidentUtility.IsCookingRecipe(bill.recipe))
                                 {
-                                    //Log.Message($"[KitchenFires] Cooking recipe work: {bill.recipe.defName} for {actor.Name}");
                                     KitchenIncidentUtility.CheckForKitchenIncident(actor);
                                 }
                             }
@@ -92,19 +79,32 @@ namespace KitchenFires
         [HarmonyPostfix]
         public static void Postfix(Pawn_PathFollower __instance)
         {
-            // Access the pawn through the private field
-            var pawnField = typeof(Pawn_PathFollower).GetField("pawn", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            
+            var pawnField = typeof(Pawn_PathFollower).GetField("pawn", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (pawnField?.GetValue(__instance) is Pawn pawn)
             {
-                // Evaluate the cell being entered, not the current position
                 var nextCell = __instance.nextCell;
-                //Log.Message($"[KitchenFires] AnkleSprain: TryEnterNextPathCell postfix for {pawn.LabelShort} -> {nextCell}");
                 TrippingAccidentUtility.CheckForTrippingAccident(pawn, nextCell);
             }
         }
     }
 
-    
+    // Work accidents: check every job tick via JobDriver.DriverTick
+    [HarmonyPatch(typeof(JobDriver), nameof(JobDriver.DriverTick))]
+    public static class JobDriver_DriverTick_Patch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(JobDriver __instance)
+        {
+            try
+            {
+                var pawn = __instance?.pawn;
+                if (pawn == null || pawn.Dead || pawn.Downed || !pawn.IsColonist) return;
+                WorkAccidentUtility.CheckForWorkAccident(pawn);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[KitchenFires] Work accident tick hook failed: {ex}");
+            }
+        }
+    }
 }

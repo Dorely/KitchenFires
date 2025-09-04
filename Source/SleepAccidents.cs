@@ -24,10 +24,81 @@ namespace KitchenFires
             if (KitchenIncidentQueue.TryExecuteQueuedIncident(pawn, KitchenIncidentQueue.QueuedIncidentContext.Sleep))
                 return;
 
-            if (Rand.Chance(BASE_NIGHTMARE_CHANCE))
+            // Trauma-aware multiplier: recent negative memories, pain, traits, low mood
+            float mult = ComputeNightTerrorChanceMultiplier(pawn);
+            float chance = BASE_NIGHTMARE_CHANCE * mult;
+            if (Rand.Chance(chance))
             {
                 TriggerImmediateNightmare(pawn);
             }
+        }
+
+        private static float ComputeNightTerrorChanceMultiplier(Pawn pawn)
+        {
+            float mult = 1f;
+
+            try
+            {
+                // 1) Recent negative memories boost
+                var thoughts = pawn.needs?.mood?.thoughts?.memories?.Memories;
+                if (thoughts != null)
+                {
+                    int recentWindowTicks = GenDate.TicksPerDay * 10; // last ~10 days
+                    float negSum = 0f;
+                    int traumaHits = 0;
+                    foreach (var mem in thoughts)
+                    {
+                        // skip expired or very old
+                        if (mem == null) continue;
+                        if (mem.permanent || mem.age <= recentWindowTicks)
+                        {
+                            float mood = 0f;
+                            try { mood = mem.MoodOffset(); } catch { }
+                            if (mood < -1f)
+                            {
+                                negSum += Mathf.Min(-mood, 12f); // cap individual impact
+                            }
+
+                            // Key trauma memories get extra weight
+                            var d = mem.def;
+                            if (d == ThoughtDefOf.WitnessedDeathFamily || d == ThoughtDefOf.WitnessedDeathAlly || d == ThoughtDefOf.WitnessedDeathNonAlly || d == ThoughtDefOf.KnowColonistDied || d == ThoughtDefOf.PawnWithGoodOpinionDied || d == ThoughtDefOf.ColonistLost)
+                            {
+                                traumaHits++;
+                            }
+                        }
+                    }
+                    // General negativity: up to +1.0x
+                    mult += Mathf.Clamp(negSum * 0.03f, 0f, 1.0f);
+                    // Specific traumatic events: +0.3x each up to +1.5x
+                    mult += Mathf.Clamp(traumaHits * 0.3f, 0f, 1.5f);
+                }
+
+                // 2) Physical pain increases risk
+                float pain = pawn.health?.hediffSet?.PainTotal ?? 0f;
+                if (pain > 0.2f)
+                {
+                    mult += Mathf.Clamp01(pain) * 0.5f; // up to +0.5x at 100% pain
+                }
+
+                // 3) Low mood increases risk
+                float curMood = pawn.needs?.mood?.CurLevel ?? 0.5f;
+                if (curMood < 0.35f) mult += 0.2f;
+                if (curMood < 0.20f) mult += 0.2f;
+
+                // 4) Traits: Wimp more susceptible; Psychopath less
+                var traits = pawn.story?.traits;
+                if (traits != null)
+                {
+                    if (traits.HasTrait(TraitDefOf.Wimp)) mult += 0.3f;
+                    if (traits.HasTrait(TraitDefOf.Psychopath)) mult *= 0.7f;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[KitchenFires] Night terror multiplier calc failed: {ex.Message}");
+            }
+
+            return Mathf.Clamp(mult, 0.5f, 5f);
         }
 
         public static void TriggerImmediateNightmare(Pawn pawn)

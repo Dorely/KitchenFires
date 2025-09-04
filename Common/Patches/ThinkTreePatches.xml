@@ -1,0 +1,21 @@
+<Patch>
+  <!-- Map custom NightTerror to a flee behavior subtree (like PanicFlee) -->
+  <Operation Class="PatchOperationAdd">
+    <xpath>Defs/ThinkTreeDef[defName="MentalStateNonCritical"]/thinkRoot/subNodes</xpath>
+    <value>
+      <li Class="ThinkNode_ConditionalMentalState">
+        <state>NightTerror</state>
+        <subNodes>
+          <!-- Run locally and do not leave the map -->
+          <li Class="JobGiver_FleeDanger" />
+          <li Class="JobGiver_WanderAnywhere">
+            <maxDanger>Some</maxDanger>
+            <locomotionUrgency>Sprint</locomotionUrgency>
+            <ticksBetweenWandersRange>45~90</ticksBetweenWandersRange>
+            <expiryInterval>200</expiryInterval>
+          </li>
+        </subNodes>
+      </li>
+    </value>
+  </Operation>
+</Patch>

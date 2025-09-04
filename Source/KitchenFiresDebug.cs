@@ -258,5 +258,33 @@ namespace KitchenFires
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             method?.Invoke(null, new object[] { pawn, riskAssessment });
         }
+
+        [DebugAction("Kitchen Fires", "Queue nightmare", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void QueueNightmare()
+        {
+            Map map = Find.CurrentMap;
+            if (map == null) return;
+            var incidentDef = DefDatabase<IncidentDef>.GetNamed("SleepAccident_Nightmare", false);
+            if (incidentDef == null)
+            {
+                Messages.Message("SleepAccident_Nightmare def not found.", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            var parms = new IncidentParms { target = map };
+            KitchenIncidentQueue.Add(incidentDef, parms);
+            Messages.Message("Nightmare queued - pawn must be sleeping to trigger it!", MessageTypeDefOf.NeutralEvent);
+        }
+
+        [DebugAction("Kitchen Fires", "Test immediate nightmare (select pawn)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void TestImmediateNightmare()
+        {
+            Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
+            if (pawn == null || !pawn.IsColonist)
+            {
+                Messages.Message("Please select a colonist first!", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            SleepAccidentUtility.TriggerImmediateNightmare(pawn);
+        }
     }
 }

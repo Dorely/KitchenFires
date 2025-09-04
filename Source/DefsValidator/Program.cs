@@ -81,7 +81,7 @@ namespace DefsValidator
                 Console.Error.WriteLine("WARN: KitchenFires.dll not found; custom class checks will be skipped.");
             }
 
-            // Rule 1: XML well-formedness and token garbage scan
+            // Rule 1: XML well-formedness, token garbage scan, and root element name
             foreach (var f in xmlFiles)
             {
                 string text = File.ReadAllText(f);
@@ -94,6 +94,13 @@ namespace DefsValidator
                 {
                     var doc = new XmlDocument();
                     doc.LoadXml(text);
+                    // Catch files under Defs with wrong root (e.g., <Patch>)
+                    var root = doc.DocumentElement?.Name ?? string.Empty;
+                    if (!string.Equals(root, "Defs", StringComparison.Ordinal))
+                    {
+                        Console.Error.WriteLine($"ERROR: '{f}': root element named {root}; should be named Defs");
+                        errors++;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -108,6 +115,28 @@ namespace DefsValidator
             {
                 try { var x = new XmlDocument(); x.Load(f); allDocs.Add(Tuple.Create(x, f)); }
                 catch { }
+            }
+
+            // Rule 1b: Patch operations placed in Defs (should be under Patches)
+            foreach (var pair in allDocs)
+            {
+                var doc = pair.Item1;
+                var path = pair.Item2;
+                if (!string.Equals(doc.DocumentElement?.Name, "Defs", StringComparison.Ordinal))
+                {
+                    // Already reported by Rule 1
+                    continue;
+                }
+                foreach (XmlNode n in doc.SelectNodes("//*"))
+                {
+                    var cls = n.Attributes?["Class"]?.Value;
+                    if (string.Equals(n.Name, "Operation", StringComparison.Ordinal) || (cls != null && cls.StartsWith("PatchOperation", StringComparison.Ordinal)))
+                    {
+                        Console.Error.WriteLine($"ERROR: Patch operation found in Defs file '{path}'. Move this to Common/Patches (root <Patch>). Offending node: <{n.Name}{(cls != null ? $" Class=\"{cls}\"" : string.Empty)}>.");
+                        errors++;
+                        break;
+                    }
+                }
             }
 
             // Rule 2: Duplicated defNames across files

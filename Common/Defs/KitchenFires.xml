@@ -318,6 +318,35 @@
     <letterText>{0} suffered a work accident while performing manual labor. Be cautious around mining, chopping, planting, and harvesting tasks.</letterText>
     <letterLabel>Work accident</letterLabel>
     <letterDef>NegativeEvent</letterDef>
-  </IncidentDef>
-
-</Defs>
+  </IncidentDef>  
+  <!-- Sleep Accident: Nightmare -->
+  <IncidentDef>
+    <defName>SleepAccident_Nightmare</defName>
+    <label>nightmare</label>
+    <category>ThreatSmall</category>
+    <targetTags>
+      <li>Map_PlayerHome</li>
+    </targetTags>
+    <workerClass>KitchenFires.IncidentWorker_SleepNightmare</workerClass>
+    <baseChance>0.6</baseChance>
+    <minRefireDays>0.6</minRefireDays>
+    <letterText>{0} awoke from a terrifying nightmare and is running in panic!</letterText>
+    <letterLabel>Nightmare</letterLabel>
+    <letterDef>NegativeEvent</letterDef>
+  </IncidentDef>  
+  <!-- Custom mental state: NightTerror -->
+  <MentalStateDef ParentName="BaseMentalState">
+    <defName>NightTerror</defName>
+    <label>night terror</label>
+    <stateClass>KitchenFires.MentalState_NightTerror</stateClass>
+    <category>Misc</category>
+    <nameColor>(0.65, 0.9, 0.93)</nameColor>
+    <beginLetterLabel>night terror</beginLetterLabel>
+    <beginLetter>{0} awoke from a terrifying nightmare and is fleeing in panic.</beginLetter>
+    <recoveryMessage>{0} recovered from a night terror.</recoveryMessage>
+    <baseInspectLine>Mental state: Night terror</baseInspectLine>
+    <blockNormalThoughts>true</blockNormalThoughts>
+    <stopsJobs>true</stopsJobs>
+    <minTicksBeforeRecovery>1000</minTicksBeforeRecovery>
+    <maxTicksBeforeRecovery>1000</maxTicksBeforeRecovery>
+  </MentalStateDef></Defs>

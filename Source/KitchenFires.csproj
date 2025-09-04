@@ -63,12 +63,14 @@
     <Compile Include="KitchenFires.cs" />
     <Compile Include="KitchenIncident.cs" />
     <Compile Include="TrippingAccident.cs" />
-    <Compile Include="ButcheringAccidentUtility.cs" />    <Compile Include="KitchenIncidentQueue.cs" />
-<Compile Include="WorkAccidents.cs" />
+    <Compile Include="ButcheringAccidentUtility.cs" />
+    <Compile Include="KitchenIncidentQueue.cs" />
+<Compile Include="SleepAccidents.cs" />
+    <Compile Include="WorkAccidents.cs" />
     <Compile Include="IncidentWorkers.cs" />
     <Compile Include="KitchenExplosionScheduler.cs" />
-    <Compile Include="KitchenFiresGameComponent.cs" />
-    <Compile Include="KitchenFiresDebug.cs" />
+    <Compile Include="KitchenFiresGameComponent.cs" />    <Compile Include="KitchenFiresDebug.cs" />
+<Compile Include="MentalState_NightTerror.cs" />
     <Compile Include="Hediff_ChokingCritical.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -99,7 +101,8 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>"$(ProjectDir)DefsValidator\bin\$(Configuration)\DefsValidator.exe"
+    <PostBuildEvent>if exist "C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\KitchenFires_Release\Common\Defs\ThinkTreePatches.xml" del /f /q "C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\KitchenFires_Release\Common\Defs\ThinkTreePatches.xml"
+"$(ProjectDir)DefsValidator\bin\$(Configuration)\DefsValidator.exe"
 if errorlevel 1 exit /b 1
 xcopy "$(ProjectDir)..\Common\Assemblies\KitchenFires.dll" "$(ProjectDir)..\1.6\Assemblies\" /S /C /Y /K /I /Q /D
 xcopy "$(ProjectDir)..\Common\" "C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\KitchenFires_Release\Common\" /S /C /Y /K /I /Q /D

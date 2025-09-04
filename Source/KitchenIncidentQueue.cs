@@ -47,7 +47,8 @@ namespace KitchenFires
             Butchering,
             Movement,
             Eating,
-            Work
+            Work,
+            Sleep
         }
 
         private static List<QueuedKitchenIncident> queuedIncidents = new List<QueuedKitchenIncident>();
@@ -66,6 +67,7 @@ namespace KitchenFires
         private const int PARTIAL_TICKS_BUTCHERING = 300;
         private const int PARTIAL_TICKS_EATING = 180;
         private const int PARTIAL_TICKS_WORK = 200;
+        private const int PARTIAL_TICKS_SLEEP = 150;
 
         public static void Add(IncidentDef def, IncidentParms parms)
         {
@@ -90,10 +92,8 @@ namespace KitchenFires
             if (!HasSufficientProgress(pawn, context))
                 return false;
 
-            // Reset gating so subsequent incidents wait again in this job context
             var incident = queuedIncidents[index];
 
-            // Require enough time since queueing or job start (whichever is later)
             int requiredTicks = 0;
             switch (context)
             {
@@ -101,8 +101,10 @@ namespace KitchenFires
                 case QueuedIncidentContext.Butchering: requiredTicks = PARTIAL_TICKS_BUTCHERING; break;
                 case QueuedIncidentContext.Eating: requiredTicks = PARTIAL_TICKS_EATING; break;
                 case QueuedIncidentContext.Work: requiredTicks = PARTIAL_TICKS_WORK; break;
+                case QueuedIncidentContext.Sleep: requiredTicks = PARTIAL_TICKS_SLEEP; break;
                 case QueuedIncidentContext.Movement: requiredTicks = 0; break;
             }
+
             if (_jobProgressByPawn.TryGetValue(pawn.thingIDNumber, out var progCheck))
             {
                 int now = Find.TickManager.TicksGame;
@@ -115,13 +117,7 @@ namespace KitchenFires
                 return false;
             }
 
-            // Remove from queue and reset gating so subsequent incidents wait again
             queuedIncidents.RemoveAt(index);
-            if (_jobProgressByPawn.TryGetValue(pawn.thingIDNumber, out var prog))
-            {
-                prog.startTick = Find.TickManager.TicksGame;
-                prog.lastJob = pawn.CurJob;
-            }
 
             incident.parms.target = pawn.Map;
             incident.parms.forced = true;
@@ -135,6 +131,13 @@ namespace KitchenFires
                 string completionMessage = GetCompletionMessage(incident.def);
                 Messages.Message(completionMessage, MessageTypeDefOf.NegativeEvent);
             }
+
+            if (_jobProgressByPawn.TryGetValue(pawn.thingIDNumber, out var prog))
+            {
+                prog.startTick = Find.TickManager.TicksGame;
+                prog.lastJob = pawn.CurJob;
+            }
+
             return result;
         }
 
@@ -154,6 +157,8 @@ namespace KitchenFires
                     return name.StartsWith("EatingAccident_") || name == "EatingAccident_Choking";
                 case QueuedIncidentContext.Work:
                     return name.StartsWith("WorkAccident");
+                case QueuedIncidentContext.Sleep:
+                    return name.StartsWith("SleepAccident_");
                 default:
                     return false;
             }
@@ -194,6 +199,11 @@ namespace KitchenFires
                         expectedKey = key;
                         requiredTicks = PARTIAL_TICKS_WORK;
                     }
+                    break;
+                case QueuedIncidentContext.Sleep:
+                    if (!jobDefName.ToLowerInvariant().Contains("laydown")) return false;
+                    expectedKey = "LayDown";
+                    requiredTicks = PARTIAL_TICKS_SLEEP;
                     break;
             }
 

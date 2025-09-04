@@ -101,10 +101,11 @@ namespace KitchenFires
                 if (pawn == null || pawn.Dead || pawn.Downed || !pawn.IsColonist) return;
                 WorkAccidentUtility.CheckForWorkAccident(pawn);
                 SleepAccidentUtility.CheckForSleepAccident(pawn, __instance);
+                AnimalAccidentUtility.CheckForAnimalAccident(pawn, __instance);
             }
             catch (Exception ex)
             {
-                Log.Warning($"[KitchenFires] Work/Sleep accident tick hook failed: {ex}");
+                Log.Warning($"[KitchenFires] Work/Sleep/Animal accident tick hook failed: {ex}");
             }
         }
     }

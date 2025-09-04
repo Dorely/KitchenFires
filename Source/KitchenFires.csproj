@@ -66,6 +66,7 @@
     <Compile Include="ButcheringAccidentUtility.cs" />
     <Compile Include="KitchenIncidentQueue.cs" />
 <Compile Include="SleepAccidents.cs" />
+    <Compile Include="AnimalAccidents.cs" />
     <Compile Include="WorkAccidents.cs" />
     <Compile Include="IncidentWorkers.cs" />
     <Compile Include="KitchenExplosionScheduler.cs" />

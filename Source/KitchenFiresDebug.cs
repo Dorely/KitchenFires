@@ -286,5 +286,91 @@ namespace KitchenFires
             }
             SleepAccidentUtility.TriggerImmediateNightmare(pawn);
         }
+        
+        [DebugAction("Kitchen Fires", "Make selected animal milk-full", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void MakeSelectedAnimalMilkFull()
+        {
+            Pawn animal = Find.Selector.SingleSelectedThing as Pawn;
+            if (animal == null || animal.RaceProps == null || !animal.RaceProps.Animal)
+            {
+                Messages.Message("Please select an animal first!", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            var comp = animal.TryGetComp<CompMilkable>();
+            if (comp == null)
+            {
+                Messages.Message($"{animal.LabelShortCap} is not milkable.", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            var baseType = typeof(CompHasGatherableBodyResource);
+            var field = baseType.GetField("fullness", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+            field?.SetValue(comp, 1f);
+            Messages.Message($"Set milk fullness to 100% for {animal.NameShortColored}.", MessageTypeDefOf.NeutralEvent);
+        }
+
+        [DebugAction("Kitchen Fires", "Make selected animal wool-full", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void MakeSelectedAnimalWoolFull()
+        {
+            Pawn animal = Find.Selector.SingleSelectedThing as Pawn;
+            if (animal == null || animal.RaceProps == null || !animal.RaceProps.Animal)
+            {
+                Messages.Message("Please select an animal first!", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            var comp = animal.TryGetComp<CompShearable>();
+            if (comp == null)
+            {
+                Messages.Message($"{animal.LabelShortCap} is not shearable.", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            var baseType = typeof(CompHasGatherableBodyResource);
+            var field = baseType.GetField("fullness", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+            field?.SetValue(comp, 1f);
+            Messages.Message($"Set wool growth to 100% for {animal.NameShortColored}.", MessageTypeDefOf.NeutralEvent);
+        }
+
+        [DebugAction("Kitchen Fires", "Test immediate milking kick (select pawn)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void TestImmediateMilkingKick()
+        {
+            Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
+            if (pawn == null || !pawn.IsColonist)
+            {
+                Messages.Message("Please select a colonist first!", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            // Simulate a milking kick accident on the selected pawn
+            Messages.Message($"Testing milking kick for {pawn.NameShortColored}", MessageTypeDefOf.NeutralEvent);
+            var method = typeof(AnimalAccidentUtility).GetMethod("ApplyKickInjury", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            method?.Invoke(null, new object[] { pawn, null });
+        }
+
+        [DebugAction("Kitchen Fires", "Test immediate shearing mishap (select pawn)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void TestImmediateShearingAccident()
+        {
+            Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
+            if (pawn == null || !pawn.IsColonist)
+            {
+                Messages.Message("Please select a colonist first!", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            Messages.Message($"Testing shearing mishap for {pawn.NameShortColored}", MessageTypeDefOf.NeutralEvent);
+            // Randomly injure pawn (self) to simulate mishap
+            var method = typeof(AnimalAccidentUtility).GetMethod("ApplyShearCutSelf", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            method?.Invoke(null, new object[] { pawn });
+        }
+
+        [DebugAction("Kitchen Fires", "Test immediate training bite (select pawn)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void TestImmediateTrainingBite()
+        {
+            Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
+            if (pawn == null || !pawn.IsColonist)
+            {
+                Messages.Message("Please select a colonist first!", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            Messages.Message($"Testing training bite for {pawn.NameShortColored}", MessageTypeDefOf.NeutralEvent);
+            var method = typeof(AnimalAccidentUtility).GetMethod("ApplyBiteInjury", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            method?.Invoke(null, new object[] { pawn, null });
+        }
     }
 }

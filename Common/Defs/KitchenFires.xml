@@ -333,7 +333,22 @@
     <letterText>{0} awoke from a terrifying nightmare and is running in panic!</letterText>
     <letterLabel>Nightmare</letterLabel>
     <letterDef>NegativeEvent</letterDef>
-  </IncidentDef>  
+  </IncidentDef>
+  <!-- Night terror aftermath mood debuff -->
+  <ThoughtDef>
+    <defName>NightTerrorAftermath</defName>
+    <label>night terror aftermath</label>
+    <durationDays>0.3</durationDays>
+    <stackLimit>1</stackLimit>
+    <thoughtClass>Thought_Memory</thoughtClass>
+    <stages>
+      <li>
+        <label>shaken by a night terror</label>
+        <description>Still shaken from a terrifying nightmare.</description>
+        <baseMoodEffect>-4</baseMoodEffect>
+      </li>
+    </stages>
+  </ThoughtDef>
   <!-- Custom mental state: NightTerror -->
   <MentalStateDef ParentName="BaseMentalState">
     <defName>NightTerror</defName>
@@ -341,6 +356,7 @@
     <stateClass>KitchenFires.MentalState_NightTerror</stateClass>
     <category>Misc</category>
     <nameColor>(0.65, 0.9, 0.93)</nameColor>
+    <stateEffecter MayRequire="Ludeon.RimWorld.Anomaly">TerrifyingHallucinations</stateEffecter>
     <beginLetterLabel>night terror</beginLetterLabel>
     <beginLetter>{0} awoke from a terrifying nightmare and is fleeing in panic.</beginLetter>
     <recoveryMessage>{0} recovered from a night terror.</recoveryMessage>
@@ -349,4 +365,6 @@
     <stopsJobs>true</stopsJobs>
     <minTicksBeforeRecovery>1000</minTicksBeforeRecovery>
     <maxTicksBeforeRecovery>1000</maxTicksBeforeRecovery>
-  </MentalStateDef></Defs>
+    <moodRecoveryThought>NightTerrorAftermath</moodRecoveryThought>
+  </MentalStateDef>
+</Defs>

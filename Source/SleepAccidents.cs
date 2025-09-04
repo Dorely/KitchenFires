@@ -90,7 +90,7 @@ namespace KitchenFires
                     }
 
                     // Forced + forceWake; allow transition (will end any current state)
-                    handler?.TryStartMentalState(ms, null, forced: true, forceWake: true, causedByMood: false, otherPawn: null, transitionSilently: false);
+                    handler?.TryStartMentalState(ms, null, forced: true, forceWake: true, causedByMood: true, otherPawn: null, transitionSilently: false);
                 }
                 catch (System.Exception ex)
                 {

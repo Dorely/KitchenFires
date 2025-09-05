@@ -34,9 +34,7 @@ namespace KitchenFires
         // Work accidents
         public static float WorkAccidentBaseChance = 0.000001f;
         public static float WorkAccidentChanceMultiplier = 1.0f;
-        public static float WorkAccidentSeverityMultiplier = 1.0f;
-
-        // Sleep accidents
+        public static float WorkAccidentSeverityMultiplier = 1.0f;        // Sleep accidents
         public static float SleepNightmareBaseChance = 0.00002f;
         public static float SleepNightmareChanceMultiplier = 1.0f;
 
@@ -48,5 +46,9 @@ namespace KitchenFires
         public static float AnimalShearingAccidentChanceMultiplier = 1.0f;
         public static float AnimalTrainingAccidentChanceMultiplier = 1.0f;
         public static float AnimalAccidentSeverityMultiplier = 1.0f;
+
+        // Accident storm controls
+        public static float AccidentStormHourlyQueueChance = 0.5f;
+        public static bool AccidentStormHourlyForeshadow = false;
     }
 }

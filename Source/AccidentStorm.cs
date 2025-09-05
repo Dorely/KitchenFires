@@ -25,6 +25,8 @@ namespace KitchenFires
         public static void EnqueueHourlyAccident(Map map)
         {
             if (map == null) return;
+            // 50% chance to actually queue on each hourly check
+            if (!Rand.Chance(KitchenFiresSettings.AccidentStormHourlyQueueChance)) return;
             // Candidate incident defs that integrate with our queue contexts
             // Keep a mix so different activities can trigger during the storm
             var candidateDefNames = new []
@@ -55,7 +57,7 @@ namespace KitchenFires
                 target = map,
                 forced = false
             };
-            KitchenFires.KitchenIncidentQueue.Add(def, parms);
+            KitchenFires.KitchenIncidentQueue.Add(def, parms, !KitchenFiresSettings.AccidentStormHourlyForeshadow);
         }
     }
 

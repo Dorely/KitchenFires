@@ -69,14 +69,17 @@ namespace KitchenFires
         private const int PARTIAL_TICKS_WORK = 200;
         private const int PARTIAL_TICKS_SLEEP = 150;
 
-        public static void Add(IncidentDef def, IncidentParms parms)
+        public static void Add(IncidentDef def, IncidentParms parms, bool silentForeshadow = false)
         {
             var queued = new QueuedKitchenIncident(def, parms);
             queuedIncidents.Add(queued);
 
             Log.Message($"[KitchenFires] Queued incident: {def.defName}");
-            string foreshadowingMessage = GetForeshadowingMessage(def);
-            Messages.Message(foreshadowingMessage, MessageTypeDefOf.NeutralEvent);
+            if (!silentForeshadow)
+            {
+                string foreshadowingMessage = GetForeshadowingMessage(def);
+                Messages.Message(foreshadowingMessage, MessageTypeDefOf.NeutralEvent);
+            }
         }
 
         public static bool TryExecuteQueuedIncident(Pawn pawn, QueuedIncidentContext context)

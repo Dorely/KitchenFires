@@ -8,8 +8,7 @@ namespace KitchenFires
 {
     public static class ButcheringAccidentUtility
     {
-        private const float BASE_ACCIDENT_CHANCE = 0.00005f; // 0.005% base chance per butchering action
-
+        
         public static void CheckForButcheringAccident(Pawn pawn, RecipeDef recipe)
         {
             if (!pawn.IsColonist || pawn.Dead || pawn.Downed) return;
@@ -59,7 +58,7 @@ namespace KitchenFires
 
             float totalMultiplier = skillMultiplier * traitMultiplier * healthMultiplier * moodMultiplier * recipeMultiplier;
 
-            float risk = BASE_ACCIDENT_CHANCE * totalMultiplier;
+            float risk = KitchenFiresSettings.ButcheringBaseChance * KitchenFiresSettings.ButcheringChanceMultiplier * KitchenFiresSettings.GlobalChanceMultiplier * totalMultiplier;
             risk = Mathf.Clamp01(risk);
 
             return new ButcheringRiskAssessment
@@ -152,7 +151,7 @@ namespace KitchenFires
             // Risk factors make injuries worse
             severity *= (1.0f + riskMultiplier * 0.1f);
             
-            return Mathf.Clamp(severity, 0.05f, 0.8f);
+            return Mathf.Clamp(severity, 0.05f, 0.8f) * KitchenFiresSettings.ButcheringSeverityMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
         }
 
         private static void TriggerImmediateButcheringAccident(Pawn pawn, ButcheringRiskAssessment riskAssessment)

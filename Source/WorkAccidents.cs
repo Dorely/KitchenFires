@@ -11,8 +11,7 @@ namespace KitchenFires
 {
     public static class WorkAccidentUtility
     {
-        private const float BASE_WORK_ACCIDENT_CHANCE = 0.000001f; // per tick while working (~60x smaller than 60-tick checks)
-
+        
         public static bool IsWorkJob(JobDef jobDef)
         {
             if (jobDef == null) return false;
@@ -32,7 +31,7 @@ namespace KitchenFires
                 return;
 
             // Small spontaneous chance besides storyteller (per tick while working)
-            if (Rand.Chance(BASE_WORK_ACCIDENT_CHANCE * AccidentStormUtility.ChanceMultiplierFor(pawn.Map)))
+            if (Rand.Chance(KitchenFiresSettings.WorkAccidentBaseChance * KitchenFiresSettings.WorkAccidentChanceMultiplier * KitchenFiresSettings.GlobalChanceMultiplier * AccidentStormUtility.ChanceMultiplierFor(pawn.Map)))
             {
                 TriggerImmediateWorkAccident(pawn);
             }
@@ -139,7 +138,7 @@ namespace KitchenFires
                 var injury = HediffMaker.MakeHediff(hediffDef, victim, part);
                 float min = 0.12f;
                 float max = (severityRoll >= 0.80f) ? 0.75f : 0.45f;
-                injury.Severity = Rand.Range(min, max);
+                injury.Severity = Rand.Range(min, max) * KitchenFiresSettings.WorkAccidentSeverityMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
                 victim.health.AddHediff(injury);
             }
 

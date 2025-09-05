@@ -122,7 +122,7 @@ namespace KitchenFires
 
             if (targetCell.HasValue)
             {
-                float size = Rand.Range(0.3f, 0.6f);
+                float size = Rand.Range(0.3f, 0.6f) * KitchenFiresSettings.KitchenFireSizeMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
                 if (FireUtility.TryStartFireIn(targetCell.Value, map, size, triggeringPawn))
                 {
                     SendStandardLetter(parms, new LookTargets(targetCell.Value, map), triggeringPawn.NameShortColored);
@@ -132,7 +132,7 @@ namespace KitchenFires
             }
 
             // Fallback: no suitable object found — attach fire to pawn
-            float attachSize = Rand.Range(0.15f, 0.3f);
+            float attachSize = Rand.Range(0.15f, 0.3f) * KitchenFiresSettings.KitchenFireSizeMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
             triggeringPawn.TryAttachFire(attachSize, triggeringPawn);
             SendStandardLetter(parms, new LookTargets(triggeringPawn), triggeringPawn.NameShortColored);
             Log.Message($"[KitchenFires] No flammable object found; lit pawn {triggeringPawn.Name} on fire");
@@ -168,7 +168,7 @@ namespace KitchenFires
             foreach (var cell in fireCells)
             {
                 Fire fire = (Fire)GenSpawn.Spawn(ThingDefOf.Fire, cell, map);
-                fire.fireSize = Rand.Range(0.6f, 1.0f);
+                fire.fireSize = Rand.Range(0.6f, 1.0f) * KitchenFiresSettings.KitchenFireSizeMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
                 if (primaryFire == null) primaryFire = fire;
             }
             
@@ -196,8 +196,8 @@ namespace KitchenFires
             IntVec3 explosionPos = FindBestIncidentLocation(triggeringPawn);
             
             // Schedule a delayed explosion (simulate a short wick)
-            float explosionRadius = Rand.Range(1.5f, 2.5f);
-            int damage = Rand.Range(10, 25);
+            float explosionRadius = Rand.Range(1.5f, 2.5f) * KitchenFiresSettings.KitchenExplosionRadiusMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
+            int damage = (int)(Rand.Range(10, 25) * KitchenFiresSettings.KitchenExplosionDamageMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier);
             int delay = Rand.RangeInclusive(120, 240); // 2-4 seconds
             
             KitchenExplosionScheduler.Schedule(map, explosionPos, explosionRadius, triggeringPawn, damage, delay);
@@ -297,7 +297,7 @@ namespace KitchenFires
             // Lower skill = potentially more severe burns
             float maxSeverity = Mathf.Lerp(0.4f, 0.15f, skillLevel / 20f);
             float minSeverity = 0.05f;
-            return Rand.Range(minSeverity, maxSeverity);
+            return Rand.Range(minSeverity, maxSeverity) * KitchenFiresSettings.KitchenBurnSeverityMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
         }
         
         private BodyPartRecord GetLikelyBurnBodyPart(Pawn pawn)
@@ -342,7 +342,7 @@ namespace KitchenFires
             if (targetPart == null) return false;
             
             var injury = HediffMaker.MakeHediff(HediffDefOf.Cut, triggeringPawn, targetPart);
-            injury.Severity = Rand.Range(0.1f, 0.4f);
+            injury.Severity = Rand.Range(0.1f, 0.4f) * KitchenFiresSettings.ButcheringSeverityMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
             triggeringPawn.health.AddHediff(injury);
             triggeringPawn.jobs?.EndCurrentJob(JobCondition.InterruptForced);
             triggeringPawn.stances?.stagger?.StaggerFor(Rand.RangeInclusive(60, 120));
@@ -489,7 +489,7 @@ namespace KitchenFires
                 var obstruct = things.FirstOrDefault(t => t?.def != null && t.def.passability == Traversability.PassThroughOnly && t.def.pathCost > 10);
                 if (obstruct != null) terrainMul = 1.1f;
             }
-            float severity = Rand.Range(0.15f, 0.5f);
+            float severity = Rand.Range(0.15f, 0.5f) * KitchenFiresSettings.TrippingSeverityMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
             
             // Apply sprain and spill carried items
             TrippingAccidentUtility.TripSpillCarriedItems(triggeringPawn, triggeringPawn.Position, severity);

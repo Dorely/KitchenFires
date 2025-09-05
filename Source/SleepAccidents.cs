@@ -9,8 +9,7 @@ namespace KitchenFires
 {
     public static class SleepAccidentUtility
     {
-        private const float BASE_NIGHTMARE_CHANCE = 0.00002f; // per tick while sleeping
-
+        
         public static void CheckForSleepAccident(Pawn pawn, JobDriver driver)
         {
             if (pawn == null || pawn.Dead || pawn.Downed || !pawn.IsColonist) return;
@@ -26,7 +25,7 @@ namespace KitchenFires
 
             // Trauma-aware multiplier: recent negative memories, pain, traits, low mood
             float mult = ComputeNightTerrorChanceMultiplier(pawn);
-            float chance = BASE_NIGHTMARE_CHANCE * mult * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
+            float chance = KitchenFiresSettings.SleepNightmareBaseChance * KitchenFiresSettings.SleepNightmareChanceMultiplier * KitchenFiresSettings.GlobalChanceMultiplier * mult * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
             if (Rand.Chance(chance))
             {
                 TriggerImmediateNightmare(pawn);

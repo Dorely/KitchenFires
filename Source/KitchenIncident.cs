@@ -9,8 +9,7 @@ namespace KitchenFires
 {
     public static class KitchenIncidentUtility
     {
-        private const float BASE_INCIDENT_CHANCE = 0.00002f; // 0.002% base chance for any incident
-
+        
         public static void CheckForKitchenIncident(Pawn pawn)
         {
             if (!pawn.IsColonist || pawn.Dead || pawn.Downed) return;
@@ -54,7 +53,7 @@ namespace KitchenFires
             float totalMultiplier = skillMultiplier * passionMultiplier * moodMultiplier * traitMultiplier;
 
             // Calculate base incident risk
-            float incidentRisk = BASE_INCIDENT_CHANCE * totalMultiplier;
+            float incidentRisk = KitchenFiresSettings.CookingIncidentBaseChance * KitchenFiresSettings.CookingIncidentChanceMultiplier * KitchenFiresSettings.GlobalChanceMultiplier * totalMultiplier;
             incidentRisk = Mathf.Clamp01(incidentRisk);
 
             return new KitchenRiskAssessment
@@ -186,7 +185,7 @@ namespace KitchenFires
             // Lower skill = potentially more severe burns
             float maxSeverity = Mathf.Lerp(0.4f, 0.15f, skillLevel / 20f);
             float minSeverity = 0.05f;
-            return Rand.Range(minSeverity, maxSeverity);
+            return Rand.Range(minSeverity, maxSeverity) * KitchenFiresSettings.KitchenBurnSeverityMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
         }
 
         private static void TriggerKitchenFire(Pawn pawn, float severity, bool isLarge = false)
@@ -225,7 +224,7 @@ namespace KitchenFires
             foreach (var cell in fireCells)
             {
                 Fire fire = (Fire)GenSpawn.Spawn(ThingDefOf.Fire, cell, map);
-                fire.fireSize = severity * Rand.Range(0.8f, 1.2f);
+                fire.fireSize = severity * Rand.Range(0.8f, 1.2f) * KitchenFiresSettings.KitchenFireSizeMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
                 if (primaryFire == null) primaryFire = fire;
             }
 
@@ -255,14 +254,14 @@ namespace KitchenFires
             }
 
             // Create a small explosion - similar to a chemfuel explosion but smaller
-            float explosionRadius = Rand.Range(1.5f, 2.5f);
+            float explosionRadius = Rand.Range(1.5f, 2.5f) * KitchenFiresSettings.KitchenExplosionRadiusMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
             GenExplosion.DoExplosion(
                 center: explosionPos,
                 map: map,
                 radius: explosionRadius,
                 damType: DamageDefOf.Flame,
                 instigator: pawn,
-                damAmount: Rand.Range(10, 25),
+                damAmount: (int)(Rand.Range(10, 25) * KitchenFiresSettings.KitchenExplosionDamageMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier),
                 armorPenetration: -1f,
                 explosionSound: null,
                 weapon: null,

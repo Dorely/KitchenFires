@@ -9,8 +9,7 @@ namespace KitchenFires
 {
     public static class TrippingAccidentUtility
     {
-        private const float BASE_SPRAIN_CHANCE = 0.00005f; // 0.005% base chance per difficult cell
-        //private const float BASE_SPRAIN_CHANCE = 0.50005f; // testing value
+                //private const float BASE_SPRAIN_CHANCE = 0.50005f; // testing value
 
         // Backward-compatible entry that checks the pawn's current cell
         public static void CheckForTrippingAccident(Pawn pawn)
@@ -62,7 +61,7 @@ namespace KitchenFires
 
             float totalMultiplier = climbingMultiplier * traitMultiplier * moodMultiplier * ageMultiplier;
 
-            float risk = BASE_SPRAIN_CHANCE * totalMultiplier * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
+            float risk = KitchenFiresSettings.TrippingBaseChance * KitchenFiresSettings.TrippingChanceMultiplier * KitchenFiresSettings.GlobalChanceMultiplier * totalMultiplier * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
             risk = Mathf.Clamp01(risk);
 
             return new AnkleRiskAssessment
@@ -145,7 +144,7 @@ namespace KitchenFires
                     baseSeverity *= 1.0f + (ageInYears - 50) * 0.01f;
             }
 
-            return Mathf.Clamp(baseSeverity, 0.1f, 0.6f);
+            return Mathf.Clamp(baseSeverity, 0.1f, 0.6f) * KitchenFiresSettings.TrippingSeverityMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
         }
 
         private static void HandleTripAccident(Pawn pawn, IntVec3 cell, AnkleRiskAssessment risk)

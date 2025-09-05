@@ -59,12 +59,22 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
-  <ItemGroup>
+    <ItemGroup>
     <Compile Include="AccidentStorm.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EatingAccidents.cs" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="HugsLibIntegration.cs" />
+    <Compile Include="KitchenFiresSettings.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="HugsLib">
+      <HintPath>..\..\RimworldHugsLib\Mods\HugsLib\v1.6\Assemblies\HugsLib.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="KitchenFires.cs" />

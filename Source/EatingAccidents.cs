@@ -9,9 +9,7 @@ namespace KitchenFires
 {
     public static class EatingAccidentUtility
     {
-        private const float BASE_CHOKING_CHANCE = 0.00008f; // rare mishap by default
-        private const float BASE_SPILL_CHANCE = 0.00012f;   // low chance to spill food
-
+        
         public static void MaybeTriggerChoking(Pawn pawn, Thing food)
         {
             if (pawn == null || pawn.Dead || pawn.Downed || !pawn.IsColonist) return;
@@ -23,7 +21,8 @@ namespace KitchenFires
                 return;
 
             // pure chance roll (no modifiers for now)
-            if (!Rand.Chance(BASE_CHOKING_CHANCE * AccidentStormUtility.ChanceMultiplierFor(pawn.Map)))
+            float chokeChance = KitchenFiresSettings.EatingChokingBaseChance * KitchenFiresSettings.EatingChokingChanceMultiplier * KitchenFiresSettings.GlobalChanceMultiplier * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
+            if (!Rand.Chance(chokeChance))
                 return;
 
             float roll = Rand.Value; // 0..1 severity random
@@ -42,7 +41,8 @@ namespace KitchenFires
             if (pawn == null || pawn.Dead || pawn.Downed || !pawn.IsColonist) return false;
             if (pawn.Map == null) return false;
             if (food == null || food.def?.ingestible == null) return false;
-            if (!Rand.Chance(BASE_SPILL_CHANCE * AccidentStormUtility.ChanceMultiplierFor(pawn.Map))) return false;
+            float spillChance = KitchenFiresSettings.EatingSpillBaseChance * KitchenFiresSettings.EatingSpillChanceMultiplier * KitchenFiresSettings.GlobalChanceMultiplier * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
+            if (!Rand.Chance(spillChance)) return false;
 
             return DoSpill(pawn, food);
         }
@@ -116,7 +116,7 @@ namespace KitchenFires
         private static void ApplyChoking(Pawn pawn, float roll)
         {
             // Map roll to severity 0.15 .. 0.6 roughly
-            float sev = Mathf.Lerp(0.15f, 0.6f, roll);
+            float sev = Mathf.Lerp(0.15f, 0.6f, roll) * KitchenFiresSettings.EatingChokingSeverityMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
 
             var def = DefDatabase<HediffDef>.GetNamed("Choking", false);
             if (def == null)
@@ -148,7 +148,7 @@ namespace KitchenFires
             var def = DefDatabase<HediffDef>.GetNamed("ChokingCritical", false);
             if (def != null)
             {
-                float sev = Rand.Range(0.3f, 0.55f);
+                float sev = Rand.Range(0.3f, 0.55f) * KitchenFiresSettings.EatingChokingSeverityMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
                 var existing = pawn.health.hediffSet.GetFirstHediffOfDef(def);
                 if (existing != null)
                 {

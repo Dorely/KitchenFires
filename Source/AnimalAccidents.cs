@@ -9,10 +9,7 @@ namespace KitchenFires
 {
     public static class AnimalAccidentUtility
     {
-        private const float BASE_MILK_ACCIDENT_CHANCE = 0.00006f;   // rare mishap while milking
-        private const float BASE_SHEAR_ACCIDENT_CHANCE = 0.00008f;  // shearing is a bit trickier
-        private const float BASE_TRAIN_ACCIDENT_CHANCE = 0.00005f;  // minor chance during training
-
+        
         public static void CheckForAnimalAccident(Pawn pawn, JobDriver driver)
         {
             if (pawn == null || pawn.Dead || pawn.Downed || !pawn.IsColonist) return;
@@ -71,7 +68,7 @@ namespace KitchenFires
 
         private static void MaybeMilkingKick(Pawn pawn, JobDriver driver)
         {
-            float chance = BASE_MILK_ACCIDENT_CHANCE * SkillRiskMultiplier(pawn) * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
+            float chance = KitchenFiresSettings.AnimalMilkingAccidentBaseChance * KitchenFiresSettings.AnimalMilkingAccidentChanceMultiplier * KitchenFiresSettings.GlobalChanceMultiplier * SkillRiskMultiplier(pawn) * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
             if (!Rand.Chance(chance)) return;
 
             var animal = GetTargetAnimal(driver);
@@ -89,7 +86,7 @@ namespace KitchenFires
             if (part == null) return;
 
             var injury = HediffMaker.MakeHediff(hediffDef, pawn, part);
-            injury.Severity = Rand.Range(0.12f, 0.40f);
+            injury.Severity = Rand.Range(0.12f, 0.40f) * KitchenFiresSettings.AnimalAccidentSeverityMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
             pawn.health.AddHediff(injury);
 
             pawn.stances?.stagger?.StaggerFor(Rand.RangeInclusive(45, 120));
@@ -102,7 +99,7 @@ namespace KitchenFires
 
         private static void MaybeShearingCut(Pawn pawn, JobDriver driver)
         {
-            float chance = BASE_SHEAR_ACCIDENT_CHANCE * SkillRiskMultiplier(pawn) * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
+            float chance = KitchenFiresSettings.AnimalShearingAccidentBaseChance * KitchenFiresSettings.AnimalShearingAccidentChanceMultiplier * KitchenFiresSettings.GlobalChanceMultiplier * SkillRiskMultiplier(pawn) * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
             if (!Rand.Chance(chance)) return;
 
             var animal = GetTargetAnimal(driver);
@@ -128,7 +125,7 @@ namespace KitchenFires
             if (part == null) return;
 
             var injury = HediffMaker.MakeHediff(HediffDefOf.Cut, pawn, part);
-            injury.Severity = Rand.Range(0.10f, 0.35f);
+            injury.Severity = Rand.Range(0.10f, 0.35f) * KitchenFiresSettings.AnimalAccidentSeverityMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
             pawn.health.AddHediff(injury);
 
             pawn.jobs?.EndCurrentJob(JobCondition.InterruptOptional);
@@ -148,7 +145,7 @@ namespace KitchenFires
             if (part == null) return;
 
             var injury = HediffMaker.MakeHediff(HediffDefOf.Cut, animal, part);
-            injury.Severity = Rand.Range(0.08f, 0.30f);
+            injury.Severity = Rand.Range(0.08f, 0.30f) * KitchenFiresSettings.AnimalAccidentSeverityMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
             animal.health.AddHediff(injury);
 
             handler.jobs?.EndCurrentJob(JobCondition.InterruptOptional);
@@ -158,7 +155,7 @@ namespace KitchenFires
 
         private static void MaybeTrainingBite(Pawn pawn, JobDriver driver)
         {
-            float chance = BASE_TRAIN_ACCIDENT_CHANCE * SkillRiskMultiplier(pawn) * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
+            float chance = KitchenFiresSettings.AnimalTrainingAccidentBaseChance * KitchenFiresSettings.AnimalTrainingAccidentChanceMultiplier * KitchenFiresSettings.GlobalChanceMultiplier * SkillRiskMultiplier(pawn) * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
             if (!Rand.Chance(chance)) return;
 
             var animal = GetTargetAnimal(driver);
@@ -175,7 +172,7 @@ namespace KitchenFires
             if (part == null) return;
 
             var injury = HediffMaker.MakeHediff(HediffDefOf.Bite, pawn, part);
-            injury.Severity = Rand.Range(0.12f, 0.42f);
+            injury.Severity = Rand.Range(0.12f, 0.42f) * KitchenFiresSettings.AnimalAccidentSeverityMultiplier * KitchenFiresSettings.GlobalSeverityMultiplier;
             pawn.health.AddHediff(injury);
 
             pawn.stances?.stagger?.StaggerFor(Rand.RangeInclusive(45, 120));

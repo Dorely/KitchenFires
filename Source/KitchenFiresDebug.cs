@@ -3,6 +3,8 @@ using LudeonTK;
 using RimWorld;
 using Verse;
 
+using System.Linq;
+
 namespace KitchenFires
 {
     public static class KitchenFiresDebug
@@ -371,6 +373,40 @@ namespace KitchenFires
             Messages.Message($"Testing training bite for {pawn.NameShortColored}", MessageTypeDefOf.NeutralEvent);
             var method = typeof(AnimalAccidentUtility).GetMethod("ApplyBiteInjury", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             method?.Invoke(null, new object[] { pawn, null });
+        }
+
+        [DebugAction("Kitchen Fires", "Start accident storm (map)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void StartAccidentStorm()
+        {
+            Map map = Find.CurrentMap;
+            if (map == null) return;
+            var condDef = DefDatabase<GameConditionDef>.GetNamed("AccidentStormCondition", false);
+            if (condDef == null)
+            {
+                Messages.Message("AccidentStorm GameConditionDef not found.", MessageTypeDefOf.RejectInput);
+                return;
+            }
+            int duration = Rand.RangeInclusive(60000, 120000); // 1-2 days
+            var cond = GameConditionMaker.MakeCondition(condDef, duration);
+            map.gameConditionManager.RegisterCondition(cond);
+            Messages.Message("Accident storm started.", MessageTypeDefOf.NegativeEvent);
+        }
+
+        [DebugAction("Kitchen Fires", "End accident storm (map)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void EndAccidentStorm()
+        {
+            Map map = Find.CurrentMap;
+            if (map == null) return;
+            var active = map.gameConditionManager.ActiveConditions.FirstOrDefault(c => c?.def?.defName == "AccidentStormCondition");
+            if (active != null)
+            {
+                active.End();
+                Messages.Message("Accident storm ended.", MessageTypeDefOf.NeutralEvent);
+            }
+            else
+            {
+                Messages.Message("No active accident storm on this map.", MessageTypeDefOf.RejectInput);
+            }
         }
     }
 }

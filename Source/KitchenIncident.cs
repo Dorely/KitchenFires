@@ -26,7 +26,7 @@ namespace KitchenFires
 
             // Reduced chance for immediate incidents (30% of original rate)
             // This maintains some spontaneity while letting storyteller drive most incidents
-            float reducedRisk = riskAssessment.IncidentRisk * 0.3f;
+            float reducedRisk = riskAssessment.IncidentRisk * 0.3f * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
 
             if (Rand.Chance(reducedRisk))
             {

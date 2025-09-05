@@ -26,7 +26,7 @@ namespace KitchenFires
 
             // Trauma-aware multiplier: recent negative memories, pain, traits, low mood
             float mult = ComputeNightTerrorChanceMultiplier(pawn);
-            float chance = BASE_NIGHTMARE_CHANCE * mult;
+            float chance = BASE_NIGHTMARE_CHANCE * mult * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
             if (Rand.Chance(chance))
             {
                 TriggerImmediateNightmare(pawn);

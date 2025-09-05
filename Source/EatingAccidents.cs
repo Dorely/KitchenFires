@@ -23,7 +23,7 @@ namespace KitchenFires
                 return;
 
             // pure chance roll (no modifiers for now)
-            if (!Rand.Chance(BASE_CHOKING_CHANCE))
+            if (!Rand.Chance(BASE_CHOKING_CHANCE * AccidentStormUtility.ChanceMultiplierFor(pawn.Map)))
                 return;
 
             float roll = Rand.Value; // 0..1 severity random
@@ -42,7 +42,7 @@ namespace KitchenFires
             if (pawn == null || pawn.Dead || pawn.Downed || !pawn.IsColonist) return false;
             if (pawn.Map == null) return false;
             if (food == null || food.def?.ingestible == null) return false;
-            if (!Rand.Chance(BASE_SPILL_CHANCE)) return false;
+            if (!Rand.Chance(BASE_SPILL_CHANCE * AccidentStormUtility.ChanceMultiplierFor(pawn.Map))) return false;
 
             return DoSpill(pawn, food);
         }

@@ -32,7 +32,7 @@ namespace KitchenFires
                 return;
 
             // Small spontaneous chance besides storyteller (per tick while working)
-            if (Rand.Chance(BASE_WORK_ACCIDENT_CHANCE))
+            if (Rand.Chance(BASE_WORK_ACCIDENT_CHANCE * AccidentStormUtility.ChanceMultiplierFor(pawn.Map)))
             {
                 TriggerImmediateWorkAccident(pawn);
             }

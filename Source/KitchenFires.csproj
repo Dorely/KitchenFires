@@ -60,24 +60,28 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AccidentStorm.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="EatingAccidents.cs" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="KitchenFires.cs" />
     <Compile Include="KitchenIncident.cs" />
     <Compile Include="TrippingAccident.cs" />
     <Compile Include="ButcheringAccidentUtility.cs" />
     <Compile Include="KitchenIncidentQueue.cs" />
-<Compile Include="SleepAccidents.cs" />
+    <Compile Include="SleepAccidents.cs" />
     <Compile Include="AnimalAccidents.cs" />
     <Compile Include="WorkAccidents.cs" />
     <Compile Include="IncidentWorkers.cs" />
     <Compile Include="KitchenExplosionScheduler.cs" />
-    <Compile Include="KitchenFiresGameComponent.cs" />    <Compile Include="KitchenFiresDebug.cs" />
-<Compile Include="MentalState_NightTerror.cs" />
+    <Compile Include="KitchenFiresGameComponent.cs" />
+    <Compile Include="KitchenFiresDebug.cs" />
+    <Compile Include="MentalState_NightTerror.cs" />
     <Compile Include="Hediff_ChokingCritical.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="EatingAccidents.cs" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\Common\Defs\KitchenFires.xml">

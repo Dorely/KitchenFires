@@ -62,7 +62,7 @@ namespace KitchenFires
 
             float totalMultiplier = climbingMultiplier * traitMultiplier * moodMultiplier * ageMultiplier;
 
-            float risk = BASE_SPRAIN_CHANCE * totalMultiplier;
+            float risk = BASE_SPRAIN_CHANCE * totalMultiplier * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
             risk = Mathf.Clamp01(risk);
 
             return new AnkleRiskAssessment

@@ -74,7 +74,7 @@
       <li>Map_PlayerHome</li>
     </targetTags>
     <workerClass>KitchenFires.IncidentWorker_KitchenFire_Small</workerClass>
-    <baseChance>1.5</baseChance>
+    <baseChance>0</baseChance>
     <minRefireDays>2</minRefireDays>
     <letterText>A small kitchen fire has started while {0} was cooking! The flames are manageable but could spread if not handled quickly.</letterText>
     <letterLabel>Kitchen fire</letterLabel>
@@ -89,7 +89,7 @@
       <li>Map_PlayerHome</li>
     </targetTags>
     <workerClass>KitchenFires.IncidentWorker_KitchenFire_Large</workerClass>
-    <baseChance>0.8</baseChance>
+    <baseChance>0</baseChance>
     <minRefireDays>3</minRefireDays>
     <letterText>A dangerous kitchen fire has erupted while {0} was cooking! The flames are large and spreading rapidly through the cooking area.</letterText>
     <letterLabel>Kitchen fire</letterLabel>
@@ -104,7 +104,7 @@
       <li>Map_PlayerHome</li>
     </targetTags>
     <workerClass>KitchenFires.IncidentWorker_KitchenExplosion</workerClass>
-    <baseChance>0.3</baseChance>
+    <baseChance>0</baseChance>
     <minRefireDays>5</minRefireDays>
     <letterText>A small explosion has erupted from the cooking equipment while {0} was working! Cooking gas or overheated equipment has caused a dangerous blast.</letterText>
     <letterLabel>Kitchen explosion</letterLabel>
@@ -119,7 +119,7 @@
       <li>Map_PlayerHome</li>
     </targetTags>
     <workerClass>KitchenFires.IncidentWorker_KitchenBurn</workerClass>
-    <baseChance>2.2</baseChance>
+    <baseChance>0</baseChance>
     <minRefireDays>1</minRefireDays>
     <letterText>{0} has suffered a burn injury while cooking! Hot oil, steam, or cooking surfaces have caused a painful burn.</letterText>
     <letterLabel>Cooking accident</letterLabel>
@@ -135,7 +135,7 @@
       <li>Map_PlayerHome</li>
     </targetTags>
     <workerClass>KitchenFires.IncidentWorker_ButcheringCut</workerClass>
-    <baseChance>1.8</baseChance>
+    <baseChance>0</baseChance>
     <minRefireDays>1</minRefireDays>
     <letterText>{0} has suffered a cut while butchering! Sharp knives and slippery meat have caused a painful wound.</letterText>
     <letterLabel>Butchering accident</letterLabel>
@@ -150,7 +150,7 @@
       <li>Map_PlayerHome</li>
     </targetTags>
     <workerClass>KitchenFires.IncidentWorker_ButcheringAmputation</workerClass>
-    <baseChance>0.4</baseChance>
+    <baseChance>0</baseChance>
     <minRefireDays>5</minRefireDays>
     <letterText>{0} has suffered a severe amputation while butchering! A mishap with butchering tools has caused a traumatic injury.</letterText>
     <letterLabel>Severe butchering accident</letterLabel>
@@ -166,7 +166,7 @@
       <li>Map_PlayerHome</li>
     </targetTags>
     <workerClass>KitchenFires.IncidentWorker_TrippingAccident</workerClass>
-    <baseChance>1.2</baseChance>
+    <baseChance>0</baseChance>
     <minRefireDays>0.5</minRefireDays>
     <letterText>{0} tripped while moving over obstacles, dropping what they were carrying and spraining an ankle.</letterText>
     <letterLabel>Tripping accident</letterLabel>
@@ -282,7 +282,7 @@
       <li>Map_PlayerHome</li>
     </targetTags>
     <workerClass>KitchenFires.IncidentWorker_EatingChoking</workerClass>
-    <baseChance>0.6</baseChance>
+    <baseChance>0</baseChance>
     <minRefireDays>0.5</minRefireDays>
     <letterText>{0} began choking while eating and needed help.</letterText>
     <letterLabel>Choking incident</letterLabel>
@@ -313,7 +313,7 @@
       <li>Map_PlayerHome</li>
     </targetTags>
     <workerClass>KitchenFires.IncidentWorker_WorkAccident</workerClass>
-    <baseChance>1.2</baseChance>
+    <baseChance>0</baseChance>
     <minRefireDays>1.5</minRefireDays>
     <letterText>{0} suffered a work accident while performing manual labor. Be cautious around mining, chopping, planting, and harvesting tasks.</letterText>
     <letterLabel>Work accident</letterLabel>
@@ -328,7 +328,7 @@
       <li>Map_PlayerHome</li>
     </targetTags>
     <workerClass>KitchenFires.IncidentWorker_SleepNightmare</workerClass>
-    <baseChance>0.6</baseChance>
+    <baseChance>0</baseChance>
     <minRefireDays>0.6</minRefireDays>
     <letterText>{0} awoke from a terrifying nightmare and is running in panic!</letterText>
     <letterLabel>Nightmare</letterLabel>
@@ -367,4 +367,33 @@
     <maxTicksBeforeRecovery>1000</maxTicksBeforeRecovery>
     <moodRecoveryThought>NightTerrorAftermath</moodRecoveryThought>
   </MentalStateDef>
+  
+  <!-- Accident Storm: GameCondition + Incident -->
+  <GameConditionDef>
+    <defName>AccidentStormCondition</defName>
+    <conditionClass>KitchenFires.GameCondition_AccidentStorm</conditionClass>
+    <label>accident storm</label>
+    <description>An uncanny streak of misfortune sweeps the colony. Colonists are far more accident-prone, and mishaps seem to line up back-to-back.</description>
+    <endMessage>The accident storm is waning.</endMessage>
+    <letterText>An unusual wave of bad luck has struck the colony. For the next day or two, accidents will be far more likely, and mishaps will keep queuing up. Stay vigilant.</letterText>
+    <letterDef>NegativeEvent</letterDef>
+    <allowUnderground>true</allowUnderground>
+  </GameConditionDef>
+
+  <IncidentDef>
+    <defName>AccidentStorm</defName>
+    <label>accident storm</label>
+    <category>Misc</category>
+    <targetTags>
+      <li>Map_PlayerHome</li>
+    </targetTags>
+    <workerClass>IncidentWorker_MakeGameCondition</workerClass>
+    <gameCondition>AccidentStormCondition</gameCondition>
+    <letterLabel>Accident storm</letterLabel>
+    <letterDef>NegativeEvent</letterDef>
+    <baseChance>1.2</baseChance>
+    <letterText>An uncanny wave of bad luck sweeps the colony. For the next day or two, accidents will occur far more often, and one mishap will be guaranteed to queue each hour.</letterText>
+    <minRefireDays>20</minRefireDays>
+    <durationDays>1~2</durationDays>
+  </IncidentDef>
 </Defs>

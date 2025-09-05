@@ -71,7 +71,7 @@ namespace KitchenFires
 
         private static void MaybeMilkingKick(Pawn pawn, JobDriver driver)
         {
-            float chance = BASE_MILK_ACCIDENT_CHANCE * SkillRiskMultiplier(pawn);
+            float chance = BASE_MILK_ACCIDENT_CHANCE * SkillRiskMultiplier(pawn) * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
             if (!Rand.Chance(chance)) return;
 
             var animal = GetTargetAnimal(driver);
@@ -102,7 +102,7 @@ namespace KitchenFires
 
         private static void MaybeShearingCut(Pawn pawn, JobDriver driver)
         {
-            float chance = BASE_SHEAR_ACCIDENT_CHANCE * SkillRiskMultiplier(pawn);
+            float chance = BASE_SHEAR_ACCIDENT_CHANCE * SkillRiskMultiplier(pawn) * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
             if (!Rand.Chance(chance)) return;
 
             var animal = GetTargetAnimal(driver);
@@ -158,7 +158,7 @@ namespace KitchenFires
 
         private static void MaybeTrainingBite(Pawn pawn, JobDriver driver)
         {
-            float chance = BASE_TRAIN_ACCIDENT_CHANCE * SkillRiskMultiplier(pawn);
+            float chance = BASE_TRAIN_ACCIDENT_CHANCE * SkillRiskMultiplier(pawn) * AccidentStormUtility.ChanceMultiplierFor(pawn.Map);
             if (!Rand.Chance(chance)) return;
 
             var animal = GetTargetAnimal(driver);
